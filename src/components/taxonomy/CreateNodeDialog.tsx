@@ -243,54 +243,8 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
 
           {/* Proficiency Levels for Skills */}
           {nodeType === 'skill' && <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between">
-                  Proficiency Levels
-                  <Button type="button" variant="outline" size="sm" onClick={addProficiencyLevel}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Level
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {proficiencyLevels.map((level, index) => <div key={index} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium">Level {index + 1}</h4>
-                      {proficiencyLevels.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => removeProficiencyLevel(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <Label>Title *</Label>
-                        <Input value={level.title} onChange={e => updateProficiencyLevel(index, 'title', e.target.value)} placeholder="e.g., Beginner" />
-                        {errors[`proficiency_${index}_title`] && <p className="text-sm text-destructive mt-1">
-                            {errors[`proficiency_${index}_title`]}
-                          </p>}
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label>Min Score</Label>
-                          <Input type="number" min="0" max="100" value={level.minScore} onChange={e => updateProficiencyLevel(index, 'minScore', parseInt(e.target.value) || 0)} />
-                        </div>
-                        <div>
-                          <Label>Max Score</Label>
-                          <Input type="number" min="0" max="100" value={level.maxScore} onChange={e => updateProficiencyLevel(index, 'maxScore', parseInt(e.target.value) || 100)} />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label>Description *</Label>
-                      <Textarea value={level.description} onChange={e => updateProficiencyLevel(index, 'description', e.target.value)} placeholder="Describe what this level represents" rows={2} />
-                      {errors[`proficiency_${index}_description`] && <p className="text-sm text-destructive mt-1">
-                          {errors[`proficiency_${index}_description`]}
-                        </p>}
-                    </div>
-                  </div>)}
-              </CardContent>
+              
+              
             </Card>}
         </div>
 
