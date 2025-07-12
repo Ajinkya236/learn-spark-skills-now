@@ -75,10 +75,7 @@ export const TaxonomyTree: React.FC<TaxonomyTreeProps> = ({
                       <Users className="h-3 w-3" />
                       {node.usageCount} users
                     </div>}
-                  {node.type === 'skill' && node.proficiencyLevels && <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <BookOpen className="h-3 w-3" />
-                      {node.proficiencyLevels.length} levels
-                    </div>}
+                  {node.type === 'skill' && node.proficiencyLevels}
                 </div>
               </div>
             </div>
