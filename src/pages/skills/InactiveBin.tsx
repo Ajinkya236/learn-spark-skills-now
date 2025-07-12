@@ -5,19 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RotateCcw, Search, Trash2, AlertCircle, Filter } from 'lucide-react';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { RotateCcw, Search, Trash2, AlertCircle, X } from 'lucide-react';
 import { TaxonomyNode } from '@/pages/skills/TaxonomyManagement';
 import { useToast } from '@/hooks/use-toast';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import Header from "@/components/Header";
+import { BackButton } from "@/components/BackButton";
+
+const ITEMS_PER_PAGE = 10;
 
 const InactiveBinPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('inactive');
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
   // Mock inactive items
@@ -56,6 +59,18 @@ const InactiveBinPage = () => {
       usageCount: 28,
       createdAt: new Date('2022-08-15'),
       updatedAt: new Date('2023-11-20')
+    },
+    {
+      id: 'inactive-4',
+      name: 'Silverlight Programming',
+      description: 'Microsoft Silverlight development',
+      type: 'skill',
+      parentId: 'some-group',
+      rank: 1,
+      isActive: false,
+      usageCount: 8,
+      createdAt: new Date('2022-03-20'),
+      updatedAt: new Date('2023-10-15')
     }
   ];
 
@@ -63,24 +78,18 @@ const InactiveBinPage = () => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          item.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'all' || item.type === typeFilter;
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'active' ? item.isActive : !item.isActive);
     
-    return matchesSearch && matchesType && matchesStatus;
+    return matchesSearch && matchesType;
   });
+
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleRestore = (item: TaxonomyNode) => {
     toast({
       title: "Restored",
       description: `${item.type} "${item.name}" has been restored successfully.`,
-    });
-  };
-
-  const handlePermanentDelete = (item: TaxonomyNode) => {
-    toast({
-      title: "Permanently Deleted",
-      description: `${item.type} "${item.name}" has been permanently deleted.`,
-      variant: "destructive"
     });
   };
 
@@ -93,7 +102,7 @@ const InactiveBinPage = () => {
   const getRetentionWarning = (daysInactive: number): string => {
     const daysLeft = 30 - daysInactive;
     if (daysLeft <= 0) {
-      return 'Can be permanently deleted';
+      return 'Inactive';
     } else if (daysLeft <= 7) {
       return `Will be auto-deleted in ${daysLeft} days`;
     }
@@ -109,6 +118,9 @@ const InactiveBinPage = () => {
     }
   };
 
+  const clearTypeFilter = () => setTypeFilter('all');
+  const clearSearchFilter = () => setSearchTerm('');
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -116,9 +128,10 @@ const InactiveBinPage = () => {
         <SidebarInset className="flex-1">
           <Header />
           <div className="flex-1 space-y-6 p-4 md:p-6 pt-20">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
+            {/* Header with Back Button */}
+            <div className="flex items-center gap-4">
+              <BackButton />
+              <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-black text-jio-dark font-inter">Inactive Bin</h1>
                 <p className="text-muted-foreground font-inter">Manage inactivated taxonomy items</p>
               </div>
@@ -127,85 +140,61 @@ const InactiveBinPage = () => {
               </Badge>
             </div>
 
-            {/* Filters */}
+            {/* Search */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-bold text-jio-dark font-inter">
-                  <Filter className="h-5 w-5" />
-                  Filters
-                </CardTitle>
+                <CardTitle className="text-lg font-bold text-jio-dark font-inter">Search & Filters</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium font-inter">Search</label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search items..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 font-inter"
-                      />
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search items..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 font-inter"
+                    />
+                  </div>
+
+                  {/* Filter Bubbles */}
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {['cluster', 'group', 'skill'].map((type) => (
+                        <Badge
+                          key={type}
+                          variant={typeFilter === type ? "default" : "outline"}
+                          className={`cursor-pointer capitalize font-inter ${
+                            typeFilter === type ? 'bg-jio-blue hover:bg-jio-blue/90' : ''
+                          }`}
+                          onClick={() => setTypeFilter(typeFilter === type ? 'all' : type)}
+                        >
+                          {type}
+                          {typeFilter === type && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                clearTypeFilter();
+                              }}
+                              className="ml-1 hover:bg-white/20 rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </Badge>
+                      ))}
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium font-inter">Type</label>
-                    <Select value={typeFilter} onValueChange={setTypeFilter}>
-                      <SelectTrigger className="font-inter">
-                        <SelectValue placeholder="All types" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="cluster">Clusters</SelectItem>
-                        <SelectItem value="group">Groups</SelectItem>
-                        <SelectItem value="skill">Skills</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium font-inter">Status</label>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="font-inter">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="all">All</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {/* Applied Filters */}
+                    {searchTerm && (
+                      <Badge variant="secondary" className="flex items-center gap-1 font-inter">
+                        Search: "{searchTerm}"
+                        <button onClick={clearSearchFilter} className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
                   </div>
-                </div>
-
-                {/* Filter Bubbles */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {typeFilter !== 'all' && (
-                    <Badge variant="secondary" className="flex items-center gap-1 font-inter">
-                      Type: {typeFilter}
-                      <button onClick={() => setTypeFilter('all')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5">
-                        ×
-                      </button>
-                    </Badge>
-                  )}
-                  {statusFilter !== 'inactive' && (
-                    <Badge variant="secondary" className="flex items-center gap-1 font-inter">
-                      Status: {statusFilter}
-                      <button onClick={() => setStatusFilter('inactive')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5">
-                        ×
-                      </button>
-                    </Badge>
-                  )}
-                  {searchTerm && (
-                    <Badge variant="secondary" className="flex items-center gap-1 font-inter">
-                      Search: "{searchTerm}"
-                      <button onClick={() => setSearchTerm('')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5">
-                        ×
-                      </button>
-                    </Badge>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -219,7 +208,7 @@ const InactiveBinPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                {filteredItems.length === 0 ? (
+                {paginatedItems.length === 0 ? (
                   <div className="text-center py-8">
                     <Trash2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2 font-inter">No items found</h3>
@@ -241,7 +230,7 @@ const InactiveBinPage = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredItems.map(item => {
+                        {paginatedItems.map(item => {
                           const daysInactive = getDaysInactive(item.updatedAt);
                           const retentionWarning = getRetentionWarning(daysInactive);
                           
@@ -289,15 +278,6 @@ const InactiveBinPage = () => {
                                     <RotateCcw className="h-4 w-4 mr-1" />
                                     Restore
                                   </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePermanentDelete(item)}
-                                    className="text-destructive hover:text-destructive font-inter"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Delete
-                                  </Button>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -305,6 +285,39 @@ const InactiveBinPage = () => {
                         })}
                       </TableBody>
                     </Table>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center mt-4 pb-4">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious 
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            ))}
+                            <PaginationItem>
+                              <PaginationNext 
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

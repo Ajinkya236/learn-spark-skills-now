@@ -1,8 +1,11 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Download, Settings, Trash2, Edit, Merge, RotateCcw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Plus, Upload, Download, Settings, Trash2, Edit, Merge, RotateCcw, Users, BookOpen } from "lucide-react";
 import { TaxonomyTree } from "@/components/taxonomy/TaxonomyTree";
 import { CreateNodeDialog } from "@/components/taxonomy/CreateNodeDialog";
 import { EditNodeDialog } from "@/components/taxonomy/EditNodeDialog";
@@ -15,6 +18,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import { BackButton } from "@/components/BackButton";
 
 export interface TaxonomyNode {
   id: string;
@@ -41,6 +45,8 @@ export interface ProficiencyLevel {
   order: number;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const TaxonomyManagement = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -48,6 +54,7 @@ const TaxonomyManagement = () => {
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<TaxonomyNode | null>(null);
   const [selectedNodeType, setSelectedNodeType] = useState<'cluster' | 'group' | 'skill'>('cluster');
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -110,6 +117,24 @@ const TaxonomyManagement = () => {
     }]
   }]);
 
+  const flattenTaxonomyData = (nodes: TaxonomyNode[], level = 0): Array<TaxonomyNode & { level: number }> => {
+    let result: Array<TaxonomyNode & { level: number }> = [];
+    
+    nodes.forEach(node => {
+      result.push({ ...node, level });
+      if (node.children) {
+        result = result.concat(flattenTaxonomyData(node.children, level + 1));
+      }
+    });
+    
+    return result;
+  };
+
+  const flatData = flattenTaxonomyData(taxonomyData);
+  const totalPages = Math.ceil(flatData.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = flatData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   const handleCreateNode = (type: 'cluster' | 'group' | 'skill') => {
     setSelectedNodeType(type);
     setCreateDialogOpen(true);
@@ -143,6 +168,19 @@ const TaxonomyManagement = () => {
     });
   };
 
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'cluster': return 'bg-blue-100 text-blue-800';
+      case 'group': return 'bg-green-100 text-green-800';
+      case 'skill': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getIndentClass = (level: number) => {
+    return `pl-${Math.min(level * 4, 16)}`;
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -150,9 +188,10 @@ const TaxonomyManagement = () => {
         <SidebarInset className="flex-1">
           <Header />
           <div className="flex-1 space-y-6 p-4 md:p-6 pt-20">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
+            {/* Header with Back Button */}
+            <div className="flex items-center gap-4">
+              <BackButton />
+              <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-black text-jio-dark font-inter">Taxonomy Management</h1>
                 <p className="text-muted-foreground font-inter">Create and manage your skills hierarchy</p>
               </div>
@@ -173,13 +212,6 @@ const TaxonomyManagement = () => {
                   <Upload className="mr-2 h-4 w-4" />
                   <span className="hidden sm:inline">Bulk Import</span>
                 </Button>
-                <Button 
-                  onClick={() => handleCreateNode('cluster')}
-                  className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter font-semibold"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">New Cluster</span>
-                </Button>
               </div>
             </div>
 
@@ -196,14 +228,6 @@ const TaxonomyManagement = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleCreateNode('cluster')} 
-                    className="justify-start font-inter"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Cluster
-                  </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => handleCreateNode('group')} 
@@ -232,25 +256,142 @@ const TaxonomyManagement = () => {
               </CardContent>
             </Card>
 
-            {/* Taxonomy Tree */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="font-bold text-jio-dark font-inter">Skills Taxonomy Tree</span>
-                </CardTitle>
-                <CardDescription className="font-inter">
-                  Organize skills into clusters, groups, and individual skills. Use drag & drop to reorder.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <TaxonomyTree 
-                  data={taxonomyData} 
-                  onEdit={handleEditNode} 
-                  onInactivate={handleInactivateNode} 
-                  onCreateChild={handleCreateNode} 
-                />
-              </CardContent>
-            </Card>
+            {/* Taxonomy Views */}
+            <Tabs defaultValue="tree" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="tree" className="font-inter">Tree View</TabsTrigger>
+                <TabsTrigger value="table" className="font-inter">Tabular View</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="tree">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="font-bold text-jio-dark font-inter">Skills Taxonomy Tree</span>
+                    </CardTitle>
+                    <CardDescription className="font-inter">
+                      Organize skills into clusters, groups, and individual skills. Use drag & drop to reorder.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <TaxonomyTree 
+                      data={taxonomyData} 
+                      onEdit={handleEditNode} 
+                      onInactivate={handleInactivateNode} 
+                      onCreateChild={handleCreateNode} 
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="table">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-bold text-jio-dark font-inter">Taxonomy Table View</CardTitle>
+                    <CardDescription className="font-inter">
+                      View all clusters, groups, and skills in a structured table format
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="font-inter">Name</TableHead>
+                            <TableHead className="font-inter">Type</TableHead>
+                            <TableHead className="font-inter">Description</TableHead>
+                            <TableHead className="font-inter">Usage</TableHead>
+                            <TableHead className="font-inter">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedData.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                <div className={`flex items-center gap-2 ${getIndentClass(item.level)}`}>
+                                  <span className="text-lg">
+                                    {item.type === 'cluster' ? '📁' : item.type === 'group' ? '📂' : '🎯'}
+                                  </span>
+                                  <span className="font-medium font-inter">{item.name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={getTypeColor(item.type) + " font-inter"}>
+                                  {item.type}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="max-w-64 truncate font-inter">
+                                {item.description || '-'}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-4">
+                                  {item.usageCount !== undefined && (
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                      <Users className="h-3 w-3" />
+                                      <span className="font-inter">{item.usageCount}</span>
+                                    </div>
+                                  )}
+                                  {item.type === 'skill' && item.proficiencyLevels && (
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                      <BookOpen className="h-3 w-3" />
+                                      <span className="font-inter">{item.proficiencyLevels.length}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleEditNode(item)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center mt-4 pb-4">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious 
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            ))}
+                            <PaginationItem>
+                              <PaginationNext 
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
 
             {/* Dialogs */}
             <CreateNodeDialog 

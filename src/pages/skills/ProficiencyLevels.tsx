@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Edit, Trash2, Download, Upload, AlertCircle, GripVertical, Info } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Plus, Edit, Archive, Download, Upload, AlertCircle, GripVertical, Info } from 'lucide-react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
@@ -30,12 +32,14 @@ interface Proficiency {
   id: string;
   skillId: string;
   skillName: string;
-  title: string;
   description: string;
   proficiencyLevelId: string;
   proficiencyLevelName: string;
   order: number;
+  isActive: boolean;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 const ProficiencyLevels = () => {
   const [proficiencyLevels] = useState<ProficiencyLevel[]>([
@@ -45,29 +49,38 @@ const ProficiencyLevels = () => {
     { id: '4', name: 'Advanced', description: 'Expert level with mentoring capability', order: 4, isGlobal: true }
   ]);
 
-  const [proficiencies] = useState<Proficiency[]>([
-    { id: '1', skillId: '1', skillName: 'Python Programming', title: 'Basic Syntax', description: 'Understand Python syntax and basic constructs', proficiencyLevelId: '1', proficiencyLevelName: 'Conversant', order: 1 },
-    { id: '2', skillId: '1', skillName: 'Python Programming', title: 'Functions & Classes', description: 'Create functions and classes effectively', proficiencyLevelId: '2', proficiencyLevelName: 'Beginner', order: 2 },
-    { id: '3', skillId: '1', skillName: 'Python Programming', title: 'Advanced Libraries', description: 'Use NumPy, Pandas, and other libraries', proficiencyLevelId: '3', proficiencyLevelName: 'Intermediate', order: 3 },
-    { id: '4', skillId: '1', skillName: 'Python Programming', title: 'Architecture & Mentoring', description: 'Design systems and mentor others', proficiencyLevelId: '4', proficiencyLevelName: 'Advanced', order: 4 }
+  const [proficiencies, setProficiencies] = useState<Proficiency[]>([
+    { id: '1', skillId: '1', skillName: 'Python Programming', description: 'Understand Python syntax and basic constructs', proficiencyLevelId: '1', proficiencyLevelName: 'Conversant', order: 1, isActive: true },
+    { id: '2', skillId: '1', skillName: 'Python Programming', description: 'Create functions and classes effectively', proficiencyLevelId: '2', proficiencyLevelName: 'Beginner', order: 2, isActive: true },
+    { id: '3', skillId: '1', skillName: 'Python Programming', description: 'Use NumPy, Pandas, and other libraries', proficiencyLevelId: '3', proficiencyLevelName: 'Intermediate', order: 3, isActive: true },
+    { id: '4', skillId: '1', skillName: 'Python Programming', description: 'Design systems and mentor others', proficiencyLevelId: '4', proficiencyLevelName: 'Advanced', order: 4, isActive: true },
+    { id: '5', skillId: '2', skillName: 'JavaScript Development', description: 'Basic JavaScript syntax and DOM manipulation', proficiencyLevelId: '1', proficiencyLevelName: 'Conversant', order: 1, isActive: true },
+    { id: '6', skillId: '2', skillName: 'JavaScript Development', description: 'ES6+ features and async programming', proficiencyLevelId: '2', proficiencyLevelName: 'Beginner', order: 2, isActive: true },
+    { id: '7', skillId: '3', skillName: 'Data Analysis', description: 'Statistical analysis and data visualization', proficiencyLevelId: '3', proficiencyLevelName: 'Intermediate', order: 1, isActive: true },
   ]);
 
   const [isLevelDialogOpen, setIsLevelDialogOpen] = useState(false);
   const [isProficiencyDialogOpen, setIsProficiencyDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isInactivateDialogOpen, setIsInactivateDialogOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<ProficiencyLevel | null>(null);
   const [selectedProficiency, setSelectedProficiency] = useState<Proficiency | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
+  const activeProficiencies = proficiencies.filter(p => p.isActive);
+  const totalPages = Math.ceil(activeProficiencies.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProficiencies = activeProficiencies.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   const exportProficiencyMappings = () => {
-    // Export functionality for cluster -> group -> skill -> proficiency -> proficiency level mappings
-    const mappings = proficiencies.map(prof => ({
+    const mappings = proficiencies.filter(p => p.isActive).map((prof, index) => ({
+      No: index + 1,
       Cluster: 'Technical Skills',
       Group: 'Programming Languages',
       Skill: prof.skillName,
-      Proficiency: prof.title,
-      'Proficiency Level': prof.proficiencyLevelName,
-      Description: prof.description,
-      Order: prof.order
+      Proficiency: prof.description,
+      'Proficiency Level': prof.proficiencyLevelName
     }));
 
     const csvContent = [
@@ -91,6 +104,52 @@ const ProficiencyLevels = () => {
     });
   };
 
+  const downloadImportTemplate = () => {
+    const template = [
+      ['Skill', 'Proficiency Description', 'Proficiency Level'],
+      ['Python Programming', 'Basic syntax understanding', 'Conversant'],
+      ['JavaScript Development', 'DOM manipulation skills', 'Beginner']
+    ];
+
+    const csvContent = template.map(row => row.map(val => `"${val}"`).join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'proficiency_import_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Template Downloaded",
+      description: "Import template has been downloaded successfully."
+    });
+  };
+
+  const handleInactivateProficiency = (proficiency: Proficiency) => {
+    setSelectedProficiency(proficiency);
+    setIsInactivateDialogOpen(true);
+  };
+
+  const confirmInactivate = () => {
+    if (selectedProficiency) {
+      setProficiencies(prev => 
+        prev.map(p => 
+          p.id === selectedProficiency.id ? { ...p, isActive: false } : p
+        )
+      );
+      toast({
+        title: "Proficiency Inactivated",
+        description: `Proficiency has been moved to inactive bin.`
+      });
+      setIsInactivateDialogOpen(false);
+      setSelectedProficiency(null);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -105,134 +164,175 @@ const ProficiencyLevels = () => {
                 <h1 className="text-2xl md:text-3xl font-black text-jio-dark font-inter">Proficiency Levels</h1>
                 <p className="text-muted-foreground font-inter">Configure custom proficiency stages and scoring</p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={exportProficiencyMappings} className="font-inter">
-                  <Download className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Export Mappings</span>
-                </Button>
-                <Button 
-                  onClick={() => setIsLevelDialogOpen(true)}
-                  className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter font-semibold"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Add Level</span>
-                </Button>
-              </div>
             </div>
 
-            {/* Global Proficiency Levels */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-bold text-jio-dark font-inter">Global Proficiency Levels</CardTitle>
-                <CardDescription className="font-inter">
-                  Define business-specific proficiency levels (3-5 levels as per business policy)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {proficiencyLevels.map((level, index) => (
-                    <div key={level.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                      <div className="flex items-center gap-4">
-                        <GripVertical className="h-4 w-4 text-gray-400" />
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="min-w-[24px] h-6 flex items-center justify-center">
-                            {index + 1}
-                          </Badge>
-                          <div>
-                            <h3 className="font-semibold font-inter">{level.name}</h3>
-                            <p className="text-sm text-muted-foreground font-inter">{level.description}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedLevel(level);
-                            setIsLevelDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <Tabs defaultValue="mappings" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="mappings" className="font-inter">Skill Proficiency Mappings</TabsTrigger>
+                <TabsTrigger value="levels" className="font-inter">Global Proficiency Levels</TabsTrigger>
+              </TabsList>
 
-            {/* Skill Proficiency Mappings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-bold text-jio-dark font-inter">Skill Proficiency Mappings</CardTitle>
-                <CardDescription className="font-inter">
-                  Define proficiencies per skill and map them to proficiency levels
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Info className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm text-muted-foreground font-inter">
-                        Each proficiency must map to exactly one proficiency level
-                      </span>
-                    </div>
-                    <Button 
-                      onClick={() => setIsProficiencyDialogOpen(true)}
-                      className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Proficiency
+              <TabsContent value="mappings" className="space-y-6">
+                {/* Actions Bar */}
+                <div className="flex flex-wrap gap-2 justify-between items-center">
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={downloadImportTemplate} className="font-inter">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Template
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="font-inter">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Import Proficiencies
+                    </Button>
+                    <Button variant="outline" onClick={exportProficiencyMappings} className="font-inter">
+                      <Download className="mr-2 h-4 w-4" />
+                      Export Mappings
                     </Button>
                   </div>
-
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="font-inter">Skill</TableHead>
-                          <TableHead className="font-inter">Proficiency</TableHead>
-                          <TableHead className="font-inter">Level</TableHead>
-                          <TableHead className="font-inter">Description</TableHead>
-                          <TableHead className="font-inter">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {proficiencies.map((prof) => (
-                          <TableRow key={prof.id}>
-                            <TableCell className="font-medium font-inter">{prof.skillName}</TableCell>
-                            <TableCell className="font-inter">{prof.title}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="font-inter">{prof.proficiencyLevelName}</Badge>
-                            </TableCell>
-                            <TableCell className="max-w-48 truncate font-inter">{prof.description}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedProficiency(prof);
-                                    setIsProficiencyDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <Button 
+                    onClick={() => setIsProficiencyDialogOpen(true)}
+                    className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Proficiency
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Skill Proficiency Mappings Table */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold text-jio-dark font-inter">Skill Proficiency Mappings</CardTitle>
+                    <CardDescription className="font-inter">
+                      Define proficiencies per skill and map them to proficiency levels
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="font-inter">Skill</TableHead>
+                            <TableHead className="font-inter">Proficiency Description</TableHead>
+                            <TableHead className="font-inter">Level</TableHead>
+                            <TableHead className="font-inter">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedProficiencies.map((prof) => (
+                            <TableRow key={prof.id}>
+                              <TableCell className="font-medium font-inter">{prof.skillName}</TableCell>
+                              <TableCell className="max-w-64 font-inter">{prof.description}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="font-inter">{prof.proficiencyLevelName}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedProficiency(prof);
+                                      setIsProficiencyDialogOpen(true);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-orange-600 hover:text-orange-700"
+                                    onClick={() => handleInactivateProficiency(prof)}
+                                  >
+                                    <Archive className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center mt-4 pb-4">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious 
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            ))}
+                            <PaginationItem>
+                              <PaginationNext 
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="levels" className="space-y-6">
+                {/* Global Proficiency Levels */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold text-jio-dark font-inter">Global Proficiency Levels</CardTitle>
+                    <CardDescription className="font-inter">
+                      Define business-specific proficiency levels (3-5 levels as per business policy)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {proficiencyLevels.map((level, index) => (
+                        <div key={level.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+                          <div className="flex items-center gap-4">
+                            <GripVertical className="h-4 w-4 text-gray-400" />
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="min-w-[24px] h-6 flex items-center justify-center">
+                                {index + 1}
+                              </Badge>
+                              <div>
+                                <h3 className="font-semibold font-inter">{level.name}</h3>
+                                <p className="text-sm text-muted-foreground font-inter">{level.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedLevel(level);
+                                setIsLevelDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
 
             {/* Validation Warnings */}
             <Alert>
@@ -243,15 +343,13 @@ const ProficiencyLevels = () => {
               </AlertDescription>
             </Alert>
 
-            {/* Add/Edit Level Dialog */}
+            {/* Edit Level Dialog */}
             <Dialog open={isLevelDialogOpen} onOpenChange={setIsLevelDialogOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle className="font-inter">
-                    {selectedLevel ? 'Edit Proficiency Level' : 'Add Proficiency Level'}
-                  </DialogTitle>
+                  <DialogTitle className="font-inter">Edit Proficiency Level</DialogTitle>
                   <DialogDescription className="font-inter">
-                    Define a global proficiency level for your organization
+                    Update the proficiency level information
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -282,14 +380,14 @@ const ProficiencyLevels = () => {
                     onClick={() => {
                       toast({
                         title: "Success",
-                        description: `Proficiency level ${selectedLevel ? 'updated' : 'created'} successfully.`
+                        description: "Proficiency level updated successfully."
                       });
                       setIsLevelDialogOpen(false);
                       setSelectedLevel(null);
                     }}
                     className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
                   >
-                    {selectedLevel ? 'Update' : 'Create'}
+                    Update
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -308,7 +406,7 @@ const ProficiencyLevels = () => {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="skill-select" className="font-inter">Skill</Label>
+                    <Label htmlFor="skill-select" className="font-inter">Skill *</Label>
                     <Select defaultValue={selectedProficiency?.skillId || ''}>
                       <SelectTrigger className="font-inter">
                         <SelectValue placeholder="Select a skill..." />
@@ -321,16 +419,7 @@ const ProficiencyLevels = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="proficiency-title" className="font-inter">Proficiency Title</Label>
-                    <Input 
-                      id="proficiency-title" 
-                      placeholder="e.g., Functions & Classes" 
-                      defaultValue={selectedProficiency?.title || ''}
-                      className="font-inter"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="proficiency-description" className="font-inter">Description</Label>
+                    <Label htmlFor="proficiency-description" className="font-inter">Proficiency Description *</Label>
                     <Textarea 
                       id="proficiency-description" 
                       placeholder="Describe what this proficiency entails..."
@@ -339,7 +428,7 @@ const ProficiencyLevels = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="level-select" className="font-inter">Proficiency Level</Label>
+                    <Label htmlFor="level-select" className="font-inter">Proficiency Level *</Label>
                     <Select defaultValue={selectedProficiency?.proficiencyLevelId || ''}>
                       <SelectTrigger className="font-inter">
                         <SelectValue placeholder="Select a level..." />
@@ -370,6 +459,75 @@ const ProficiencyLevels = () => {
                     className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
                   >
                     {selectedProficiency ? 'Update' : 'Create'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Import Dialog */}
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="font-inter">Import Proficiencies</DialogTitle>
+                  <DialogDescription className="font-inter">
+                    Upload an Excel file to import proficiency mappings
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="import-file" className="font-inter">Select Excel File</Label>
+                    <Input 
+                      id="import-file" 
+                      type="file" 
+                      accept=".xlsx,.xls,.csv"
+                      className="font-inter"
+                    />
+                  </div>
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription className="font-inter">
+                      New entries will be added and existing ones will be updated. No deletions will be performed via import.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsImportDialogOpen(false)} className="font-inter">
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      toast({
+                        title: "Import Complete",
+                        description: "Proficiencies have been imported successfully."
+                      });
+                      setIsImportDialogOpen(false);
+                    }}
+                    className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
+                  >
+                    Import
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Inactivate Confirmation Dialog */}
+            <Dialog open={isInactivateDialogOpen} onOpenChange={setIsInactivateDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 font-inter">
+                    <Archive className="h-5 w-5 text-orange-600" />
+                    Confirm Inactivation
+                  </DialogTitle>
+                  <DialogDescription className="font-inter">
+                    Are you sure you want to inactivate this proficiency? It will be moved to the inactive bin.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsInactivateDialogOpen(false)} className="font-inter">
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={confirmInactivate} className="font-inter">
+                    Inactivate
                   </Button>
                 </DialogFooter>
               </DialogContent>
