@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,6 @@ interface ImportRow {
   description: string;
   type: 'cluster' | 'group' | 'skill';
   parent: string;
-  proficiencyLevels: string;
   status: 'pending' | 'success' | 'error';
   error?: string;
 }
@@ -46,7 +44,6 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
       description: 'Data science and analytics cluster',
       type: 'cluster',
       parent: '',
-      proficiencyLevels: '',
       status: 'pending'
     },
     {
@@ -54,7 +51,6 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
       description: 'ML algorithms and techniques',
       type: 'group',
       parent: 'Data Science',
-      proficiencyLevels: '',
       status: 'pending'
     },
     {
@@ -62,21 +58,19 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
       description: 'Python programming for machine learning',
       type: 'skill',
       parent: 'Machine Learning',
-      proficiencyLevels: 'Beginner|Intermediate|Advanced',
       status: 'pending'
     }
   ];
 
   const downloadTemplate = () => {
-    const headers = ['name', 'description', 'type', 'parent', 'proficiencyLevels'];
+    const headers = ['name', 'description', 'type', 'parent'];
     const csvContent = [
       headers.join(','),
       ...sampleData.map(row => [
         `"${row.name}"`,
         `"${row.description}"`,
         row.type,
-        `"${row.parent}"`,
-        `"${row.proficiencyLevels}"`
+        `"${row.parent}"`
       ].join(','))
     ].join('\n');
 
@@ -120,9 +114,6 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
       }
       if (row.type !== 'cluster' && !row.parent.trim()) {
         errors.push(`Row ${index + 1}: Parent is required for ${row.type}`);
-      }
-      if (row.type === 'skill' && !row.proficiencyLevels.trim()) {
-        errors.push(`Row ${index + 1}: Proficiency levels are required for skills`);
       }
     });
 
@@ -247,9 +238,9 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Required columns:</strong> name, description, type, parent, proficiencyLevels
+                  <strong>Required columns:</strong> name, description, type, parent
                   <br />
-                  <strong>Note:</strong> Parent should be empty for clusters. For skills, separate proficiency levels with "|"
+                  <strong>Note:</strong> Parent should be empty for clusters.
                 </AlertDescription>
               </Alert>
             </div>
