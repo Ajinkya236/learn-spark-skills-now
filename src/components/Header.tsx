@@ -12,25 +12,15 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-foreground hover:text-primary transition-colors">
-              Features
-            </a>
-            <a href="#testimonials" className="text-foreground hover:text-primary transition-colors">
-              Testimonials
-            </a>
-            
-            <a href="#about" className="text-foreground hover:text-primary transition-colors">
-              About
+            <a href="#home" className="text-foreground hover:text-primary transition-colors font-medium">
+              Home
             </a>
           </nav>
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost">
-              Sign In
-            </Button>
             <Button variant="hero">
-              Get Started
+              Request a Demo
             </Button>
           </div>
 
@@ -43,24 +33,12 @@ const Header = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && <div className="md:hidden py-4 border-t border-border/50 animate-fade-in">
             <nav className="flex flex-col gap-4">
-              <a href="#features" className="text-foreground hover:text-primary transition-colors py-2">
-                Features
-              </a>
-              <a href="#testimonials" className="text-foreground hover:text-primary transition-colors py-2">
-                Testimonials
-              </a>
-              <a href="#pricing" className="text-foreground hover:text-primary transition-colors py-2">
-                Pricing
-              </a>
-              <a href="#about" className="text-foreground hover:text-primary transition-colors py-2">
-                About
+              <a href="#home" className="text-foreground hover:text-primary transition-colors py-2">
+                Home
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t border-border/50">
-                <Button variant="ghost" className="justify-start">
-                  Sign In
-                </Button>
                 <Button variant="hero">
-                  Get Started
+                  Request a Demo
                 </Button>
               </div>
             </nav>
