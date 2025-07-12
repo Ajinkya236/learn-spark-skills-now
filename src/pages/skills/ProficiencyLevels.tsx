@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,8 +68,7 @@ const ProficiencyLevels = () => {
   const handleInactivateProficiency = (mapping: ProficiencyMapping) => {
     toast({
       title: "Proficiency Inactivated",
-      description: `Proficiency "${mapping.proficiencyDescription}" has been moved to the Inactive Bin.`,
-      variant: "success"
+      description: `Proficiency "${mapping.proficiencyDescription}" has been moved to the Inactive Bin.`
     });
   };
   
@@ -534,6 +534,7 @@ const CreateProficiencyForm: React.FC<CreateProficiencyFormProps> = ({ skills, p
   const [skillId, setSkillId] = useState('');
   const [proficiencyDescription, setProficiencyDescription] = useState('');
   const [proficiencyLevelId, setProficiencyLevelId] = useState('');
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     if (!skillId || !proficiencyDescription || !proficiencyLevelId) {
@@ -637,6 +638,7 @@ const EditProficiencyForm: React.FC<EditProficiencyFormProps> = ({ skills, profi
   const [skillId, setSkillId] = useState(existingMapping?.skillId || '');
   const [proficiencyDescription, setProficiencyDescription] = useState(existingMapping?.proficiencyDescription || '');
   const [proficiencyLevelId, setProficiencyLevelId] = useState(existingMapping?.proficiencyLevelId || '');
+  const { toast } = useToast();
 
   React.useEffect(() => {
     if (existingMapping) {
