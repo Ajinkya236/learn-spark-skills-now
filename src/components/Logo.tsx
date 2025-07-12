@@ -11,7 +11,7 @@ const Logo = ({
         </div>
         <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-accent animate-pulse"></div>
       </div>
-      <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-gray-50">
+      <span className="font-bold bg-gradient-primary bg-clip-text text-2xl text-blue-700">
         SkillSphere
       </span>
     </div>;
