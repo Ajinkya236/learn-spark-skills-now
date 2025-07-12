@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -5,10 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2 } from 'lucide-react';
-import { TaxonomyNode, ProficiencyLevel } from '@/pages/skills/TaxonomyManagement';
+import { TaxonomyNode } from '@/pages/skills/TaxonomyManagement';
 import { useToast } from '@/hooks/use-toast';
+
 interface CreateNodeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -16,6 +16,7 @@ interface CreateNodeDialogProps {
   existingNodes: TaxonomyNode[];
   onNodeCreated: (node: Partial<TaxonomyNode>) => void;
 }
+
 export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
   open,
   onOpenChange,
@@ -26,33 +27,11 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    category: '',
-    parentId: '',
-    rank: 1
+    parentId: ''
   });
-  const [proficiencyLevels, setProficiencyLevels] = useState<Omit<ProficiencyLevel, 'id'>[]>([{
-    title: 'Beginner',
-    description: '',
-    minScore: 0,
-    maxScore: 25,
-    order: 1
-  }, {
-    title: 'Intermediate',
-    description: '',
-    minScore: 26,
-    maxScore: 75,
-    order: 2
-  }, {
-    title: 'Expert',
-    description: '',
-    minScore: 76,
-    maxScore: 100,
-    order: 3
-  }]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const getAvailableParents = () => {
     const parents: TaxonomyNode[] = [];
     const traverse = (nodes: TaxonomyNode[]) => {
@@ -70,20 +49,18 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
     traverse(existingNodes);
     return parents;
   };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     // Name validation
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
-    } else {
-      // Check uniqueness within parent scope
-      const parentNode = existingNodes.find(n => n.id === formData.parentId);
-      const siblings = parentNode?.children || existingNodes;
-      const duplicate = siblings.find(s => s.name.toLowerCase() === formData.name.toLowerCase());
-      if (duplicate) {
-        newErrors.name = `A ${nodeType} named '${formData.name}' already exists in this scope.`;
-      }
+    }
+
+    // Description validation
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
     }
 
     // Parent validation for groups and skills
@@ -91,30 +68,10 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
       newErrors.parentId = `Parent ${nodeType === 'group' ? 'Cluster' : 'Group'} is required`;
     }
 
-    // Rank validation
-    if (formData.parentId) {
-      const parentNode = existingNodes.find(n => n.id === formData.parentId);
-      const siblings = parentNode?.children || [];
-      const rankExists = siblings.find(s => s.rank === formData.rank);
-      if (rankExists) {
-        newErrors.rank = `Rank ${formData.rank} is already assigned. Please choose a different rank.`;
-      }
-    }
-
-    // Proficiency levels validation for skills
-    if (nodeType === 'skill') {
-      proficiencyLevels.forEach((level, index) => {
-        if (!level.title.trim()) {
-          newErrors[`proficiency_${index}_title`] = 'Title is required';
-        }
-        if (!level.description.trim()) {
-          newErrors[`proficiency_${index}_description`] = 'Description is required';
-        }
-      });
-    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleSubmit = () => {
     if (!validateForm()) {
       toast({
@@ -124,141 +81,96 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
       });
       return;
     }
+
     const nodeData: Partial<TaxonomyNode> = {
       ...formData,
       type: nodeType,
       isActive: true,
-      proficiencyLevels: nodeType === 'skill' ? proficiencyLevels.map((level, index) => ({
-        ...level,
-        id: `${Date.now()}_${index}`
-      })) : undefined
+      rank: 1
     };
+
     onNodeCreated(nodeData);
 
     // Reset form
     setFormData({
       name: '',
       description: '',
-      category: '',
-      parentId: '',
-      rank: 1
+      parentId: ''
     });
-    setProficiencyLevels([{
-      title: 'Beginner',
-      description: '',
-      minScore: 0,
-      maxScore: 25,
-      order: 1
-    }, {
-      title: 'Intermediate',
-      description: '',
-      minScore: 26,
-      maxScore: 75,
-      order: 2
-    }, {
-      title: 'Expert',
-      description: '',
-      minScore: 76,
-      maxScore: 100,
-      order: 3
-    }]);
     setErrors({});
   };
-  const addProficiencyLevel = () => {
-    const newLevel: Omit<ProficiencyLevel, 'id'> = {
-      title: '',
-      description: '',
-      minScore: 0,
-      maxScore: 100,
-      order: proficiencyLevels.length + 1
-    };
-    setProficiencyLevels([...proficiencyLevels, newLevel]);
-  };
-  const removeProficiencyLevel = (index: number) => {
-    setProficiencyLevels(proficiencyLevels.filter((_, i) => i !== index));
-  };
-  const updateProficiencyLevel = (index: number, field: keyof Omit<ProficiencyLevel, 'id'>, value: string | number) => {
-    const updated = [...proficiencyLevels];
-    updated[index] = {
-      ...updated[index],
-      [field]: value
-    };
-    setProficiencyLevels(updated);
-  };
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create New {nodeType.charAt(0).toUpperCase() + nodeType.slice(1)}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="font-inter font-bold text-jio-dark">
+            Create New {nodeType.charAt(0).toUpperCase() + nodeType.slice(1)}
+          </DialogTitle>
+          <DialogDescription className="font-inter">
             Add a new {nodeType} to your taxonomy hierarchy
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input id="name" value={formData.name} onChange={e => setFormData({
-              ...formData,
-              name: e.target.value
-            })} placeholder={`Enter ${nodeType} name`} />
-              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-            </div>
-
-            
-          </div>
-
+          {/* Name Field */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" value={formData.description} onChange={e => setFormData({
-            ...formData,
-            description: e.target.value
-          })} placeholder={`Describe this ${nodeType}`} />
+            <Label htmlFor="name" className="font-inter font-medium">Name *</Label>
+            <Input 
+              id="name" 
+              value={formData.name} 
+              onChange={e => setFormData({ ...formData, name: e.target.value })} 
+              placeholder={`Enter ${nodeType} name`}
+              className="font-inter"
+            />
+            {errors.name && <p className="text-sm text-destructive font-inter">{errors.name}</p>}
           </div>
 
-          {/* Category for Clusters */}
-          {nodeType === 'cluster' && <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input id="category" value={formData.category} onChange={e => setFormData({
-            ...formData,
-            category: e.target.value
-          })} placeholder="Enter category" />
-            </div>}
+          {/* Description Field */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="font-inter font-medium">Description *</Label>
+            <Textarea 
+              id="description" 
+              value={formData.description} 
+              onChange={e => setFormData({ ...formData, description: e.target.value })} 
+              placeholder={`Describe this ${nodeType}`}
+              className="font-inter"
+            />
+            {errors.description && <p className="text-sm text-destructive font-inter">{errors.description}</p>}
+          </div>
 
           {/* Parent Selection */}
-          {(nodeType === 'group' || nodeType === 'skill') && <div className="space-y-2">
-              <Label htmlFor="parent">
+          {(nodeType === 'group' || nodeType === 'skill') && (
+            <div className="space-y-2">
+              <Label htmlFor="parent" className="font-inter font-medium">
                 Parent {nodeType === 'group' ? 'Cluster' : 'Group'} *
               </Label>
-              <Select value={formData.parentId} onValueChange={value => setFormData({
-            ...formData,
-            parentId: value
-          })}>
-                <SelectTrigger>
+              <Select value={formData.parentId} onValueChange={value => setFormData({ ...formData, parentId: value })}>
+                <SelectTrigger className="font-inter">
                   <SelectValue placeholder={`Select parent ${nodeType === 'group' ? 'cluster' : 'group'}`} />
                 </SelectTrigger>
                 <SelectContent>
-                  {getAvailableParents().map(parent => <SelectItem key={parent.id} value={parent.id}>
+                  {getAvailableParents().map(parent => (
+                    <SelectItem key={parent.id} value={parent.id} className="font-inter">
                       {parent.name}
-                    </SelectItem>)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              {errors.parentId && <p className="text-sm text-destructive">{errors.parentId}</p>}
-            </div>}
-
-          {/* Proficiency Levels for Skills */}
-          {nodeType === 'skill'}
+              {errors.parentId && <p className="text-sm text-destructive font-inter">{errors.parentId}</p>}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-inter">
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>
+          <Button onClick={handleSubmit} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
             Create {nodeType.charAt(0).toUpperCase() + nodeType.slice(1)}
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };

@@ -1,11 +1,13 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, Upload, Download, Settings, Trash2, Edit, Merge, RotateCcw, Users, BookOpen } from "lucide-react";
+import { Plus, Upload, Download, Settings, Trash2, Edit, Merge, RotateCcw, Users, BookOpen, Search } from "lucide-react";
 import { TaxonomyTree } from "@/components/taxonomy/TaxonomyTree";
 import { CreateNodeDialog } from "@/components/taxonomy/CreateNodeDialog";
 import { EditNodeDialog } from "@/components/taxonomy/EditNodeDialog";
@@ -55,6 +57,7 @@ const TaxonomyManagement = () => {
   const [selectedNode, setSelectedNode] = useState<TaxonomyNode | null>(null);
   const [selectedNodeType, setSelectedNodeType] = useState<'cluster' | 'group' | 'skill'>('cluster');
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -130,10 +133,59 @@ const TaxonomyManagement = () => {
     return result;
   };
 
-  const flatData = flattenTaxonomyData(taxonomyData);
-  const totalPages = Math.ceil(flatData.length / ITEMS_PER_PAGE);
+  const getFilteredData = () => {
+    const flatData = flattenTaxonomyData(taxonomyData);
+    if (!searchTerm) return flatData;
+    
+    return flatData.filter(node => 
+      node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      node.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const filteredData = getFilteredData();
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedData = flatData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const getTableData = () => {
+    const result: Array<{cluster: string, group: string, skill: string}> = [];
+    
+    const traverse = (nodes: TaxonomyNode[], clusterName = '', groupName = '') => {
+      nodes.forEach(node => {
+        if (node.type === 'cluster') {
+          traverse(node.children || [], node.name, '');
+        } else if (node.type === 'group') {
+          traverse(node.children || [], clusterName, node.name);
+        } else if (node.type === 'skill') {
+          result.push({
+            cluster: clusterName,
+            group: groupName,
+            skill: node.name
+          });
+        }
+      });
+    };
+    
+    traverse(taxonomyData);
+    return result;
+  };
+
+  const getFilteredTableData = () => {
+    const tableData = getTableData();
+    if (!searchTerm) return tableData;
+    
+    return tableData.filter(row => 
+      row.cluster.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.group.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.skill.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const filteredTableData = getFilteredTableData();
+  const tableTotalPages = Math.ceil(filteredTableData.length / ITEMS_PER_PAGE);
+  const tableStartIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const tablePaginatedData = filteredTableData.slice(tableStartIndex, tableStartIndex + ITEMS_PER_PAGE);
 
   const handleCreateNode = (type: 'cluster' | 'group' | 'skill') => {
     setSelectedNodeType(type);
@@ -146,6 +198,38 @@ const TaxonomyManagement = () => {
   };
 
   const handleNodeCreated = (nodeData: Partial<TaxonomyNode>) => {
+    // Create new node with proper structure
+    const newNode: TaxonomyNode = {
+      id: Date.now().toString(),
+      name: nodeData.name || '',
+      description: nodeData.description || '',
+      type: nodeData.type || 'cluster',
+      category: nodeData.category,
+      parentId: nodeData.parentId,
+      rank: nodeData.rank || 1,
+      isActive: true,
+      children: [],
+      usageCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Add node to taxonomy data structure
+    const updateTaxonomy = (nodes: TaxonomyNode[]): TaxonomyNode[] => {
+      if (!nodeData.parentId) {
+        return [...nodes, newNode];
+      }
+      
+      return nodes.map(node => ({
+        ...node,
+        children: node.id === nodeData.parentId 
+          ? [...(node.children || []), newNode]
+          : node.children ? updateTaxonomy(node.children) : node.children
+      }));
+    };
+
+    setTaxonomyData(updateTaxonomy(taxonomyData));
+    
     toast({
       title: "Success",
       description: `${nodeData.type} "${nodeData.name}" created successfully.`
@@ -154,6 +238,21 @@ const TaxonomyManagement = () => {
   };
 
   const handleNodeUpdated = (nodeData: Partial<TaxonomyNode>) => {
+    // Update taxonomy data structure
+    const updateTaxonomy = (nodes: TaxonomyNode[]): TaxonomyNode[] => {
+      return nodes.map(node => {
+        if (node.id === nodeData.id) {
+          return { ...node, ...nodeData, updatedAt: new Date() };
+        }
+        return {
+          ...node,
+          children: node.children ? updateTaxonomy(node.children) : node.children
+        };
+      });
+    };
+
+    setTaxonomyData(updateTaxonomy(taxonomyData));
+    
     toast({
       title: "Success",
       description: `${nodeData.type} "${nodeData.name}" updated successfully.`
@@ -230,6 +329,14 @@ const TaxonomyManagement = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <Button 
                     variant="outline" 
+                    onClick={() => handleCreateNode('cluster')} 
+                    className="justify-start font-inter"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Cluster
+                  </Button>
+                  <Button 
+                    variant="outline" 
                     onClick={() => handleCreateNode('group')} 
                     className="justify-start font-inter"
                   >
@@ -272,6 +379,15 @@ const TaxonomyManagement = () => {
                     <CardDescription className="font-inter">
                       Organize skills into clusters, groups, and individual skills. Use drag & drop to reorder.
                     </CardDescription>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input
+                        placeholder="Search clusters, groups, and skills..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 font-inter"
+                      />
+                    </div>
                   </CardHeader>
                   <CardContent className="p-0">
                     <TaxonomyTree 
@@ -291,65 +407,32 @@ const TaxonomyManagement = () => {
                     <CardDescription className="font-inter">
                       View all clusters, groups, and skills in a structured table format
                     </CardDescription>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input
+                        placeholder="Search clusters, groups, and skills..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 font-inter"
+                      />
+                    </div>
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="border rounded-lg">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="font-inter">Name</TableHead>
-                            <TableHead className="font-inter">Type</TableHead>
-                            <TableHead className="font-inter">Description</TableHead>
-                            <TableHead className="font-inter">Usage</TableHead>
-                            <TableHead className="font-inter">Actions</TableHead>
+                            <TableHead className="font-inter">Cluster</TableHead>
+                            <TableHead className="font-inter">Group</TableHead>
+                            <TableHead className="font-inter">Skill</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {paginatedData.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <div className={`flex items-center gap-2 ${getIndentClass(item.level)}`}>
-                                  <span className="text-lg">
-                                    {item.type === 'cluster' ? '📁' : item.type === 'group' ? '📂' : '🎯'}
-                                  </span>
-                                  <span className="font-medium font-inter">{item.name}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge className={getTypeColor(item.type) + " font-inter"}>
-                                  {item.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="max-w-64 truncate font-inter">
-                                {item.description || '-'}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-4">
-                                  {item.usageCount !== undefined && (
-                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                      <Users className="h-3 w-3" />
-                                      <span className="font-inter">{item.usageCount}</span>
-                                    </div>
-                                  )}
-                                  {item.type === 'skill' && item.proficiencyLevels && (
-                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                      <BookOpen className="h-3 w-3" />
-                                      <span className="font-inter">{item.proficiencyLevels.length}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => handleEditNode(item)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
+                          {tablePaginatedData.map((item, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-inter">{item.cluster}</TableCell>
+                              <TableCell className="font-inter">{item.group}</TableCell>
+                              <TableCell className="font-inter">{item.skill}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -357,7 +440,7 @@ const TaxonomyManagement = () => {
                     </div>
 
                     {/* Pagination */}
-                    {totalPages > 1 && (
+                    {tableTotalPages > 1 && (
                       <div className="flex justify-center mt-4 pb-4">
                         <Pagination>
                           <PaginationContent>
@@ -367,7 +450,7 @@ const TaxonomyManagement = () => {
                                 className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                               />
                             </PaginationItem>
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            {Array.from({ length: tableTotalPages }, (_, i) => i + 1).map((page) => (
                               <PaginationItem key={page}>
                                 <PaginationLink
                                   onClick={() => setCurrentPage(page)}
@@ -380,8 +463,8 @@ const TaxonomyManagement = () => {
                             ))}
                             <PaginationItem>
                               <PaginationNext 
-                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                onClick={() => setCurrentPage(Math.min(tableTotalPages, currentPage + 1))}
+                                className={currentPage === tableTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                               />
                             </PaginationItem>
                           </PaginationContent>

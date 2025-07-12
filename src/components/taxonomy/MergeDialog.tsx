@@ -83,10 +83,17 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
     
     // Simulate merge process
     setTimeout(() => {
-      toast({
-        title: "Merge Complete",
-        description: `Successfully merged "${sourceNode?.name}" into "${newTitle}"`
-      });
+      if (mergeType === 'cluster') {
+        toast({
+          title: "Cluster Merge Complete",
+          description: `Successfully merged "${sourceNode?.name}" into "${newTitle}". All skill groups now have the new parent cluster.`
+        });
+      } else {
+        toast({
+          title: "Group Merge Complete", 
+          description: `Successfully merged "${sourceNode?.name}" into "${newTitle}". All skills now have the new parent group.`
+        });
+      }
       onMergeComplete();
       resetDialog();
     }, 2000);
@@ -187,8 +194,10 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="font-inter">
-                  All children from "{sourceNode.name}" will be moved to the merged {mergeType}. 
-                  The source {mergeType} will be inactivated after merge.
+                  {mergeType === 'cluster' 
+                    ? `All skill groups from "${sourceNode.name}" will be moved to the merged cluster. The source cluster will be inactivated after merge.`
+                    : `All skills from "${sourceNode.name}" will be moved to the merged group. The source group will be inactivated after merge.`
+                  }
                 </AlertDescription>
               </Alert>
             )}
@@ -217,7 +226,7 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="font-inter font-medium">Description</Label>
+                <Label htmlFor="description" className="font-inter font-medium">Description *</Label>
                 <Textarea
                   id="description"
                   value={newDescription}
@@ -269,13 +278,13 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
             <div className="space-y-4">
               <div className="bg-muted/30 rounded-lg p-4 space-y-2">
                 <p className="text-sm font-inter">
-                  • {mergePreview.sourceChildren.length} items will be moved from source
+                  • {mergePreview.sourceChildren.length} {mergeType === 'cluster' ? 'groups' : 'skills'} will be moved from source
                 </p>
                 <p className="text-sm font-inter">
-                  • {mergePreview.targetChildren.length} items already exist in target
+                  • {mergePreview.targetChildren.length} {mergeType === 'cluster' ? 'groups' : 'skills'} already exist in target
                 </p>
                 <p className="text-sm font-medium font-inter">
-                  • Total after merge: {mergePreview.totalAfterMerge} items
+                  • Total after merge: {mergePreview.totalAfterMerge} {mergeType === 'cluster' ? 'groups' : 'skills'}
                 </p>
               </div>
 
@@ -323,7 +332,7 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
             <>
               <Button variant="outline" onClick={() => setStep('select')} className="font-inter">Back</Button>
               <Button 
-                disabled={!newTitle.trim()}
+                disabled={!newTitle.trim() || !newDescription.trim()}
                 onClick={() => setStep('summary')}
                 className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
               >

@@ -2,111 +2,123 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { RotateCcw, Search, Trash2, AlertCircle, X } from 'lucide-react';
-import { TaxonomyNode } from '@/pages/skills/TaxonomyManagement';
-import { useToast } from '@/hooks/use-toast';
+import { RotateCcw, Search, AlertTriangle, Archive } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import Header from "@/components/Header";
 import { BackButton } from "@/components/BackButton";
 
+interface InactiveItem {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'cluster' | 'group' | 'skill' | 'proficiency';
+  parentName?: string;
+  inactivatedAt: Date;
+  inactivatedBy: string;
+  usageCount: number;
+}
+
 const ITEMS_PER_PAGE = 10;
 
-const InactiveBinPage = () => {
+const InactiveBin = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(['all']);
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
-  // Mock inactive items
-  const inactiveItems: TaxonomyNode[] = [
+  // Mock data for inactive items
+  const [inactiveItems] = useState<InactiveItem[]>([
     {
-      id: 'inactive-1',
-      name: 'Legacy Java Skills',
-      description: 'Old Java skill cluster',
+      id: '1',
+      name: 'Old JavaScript Framework',
+      description: 'Legacy framework no longer in use',
+      type: 'skill',
+      parentName: 'Frontend Development',
+      inactivatedAt: new Date('2024-01-15'),
+      inactivatedBy: 'Admin User',
+      usageCount: 15
+    },
+    {
+      id: '2',
+      name: 'Deprecated Tools',
+      description: 'Old development tools cluster',
       type: 'cluster',
-      rank: 1,
-      isActive: false,
-      usageCount: 45,
-      createdAt: new Date('2023-01-15'),
-      updatedAt: new Date('2024-01-10')
+      inactivatedAt: new Date('2024-02-20'),
+      inactivatedBy: 'System Admin',
+      usageCount: 8
     },
     {
-      id: 'inactive-2',
-      name: 'Flash Development',
-      description: 'Adobe Flash development skills',
-      type: 'skill',
-      parentId: 'some-group',
-      rank: 3,
-      isActive: false,
-      usageCount: 12,
-      createdAt: new Date('2022-06-10'),
-      updatedAt: new Date('2023-12-01')
-    },
-    {
-      id: 'inactive-3',
-      name: 'Old Web Technologies',
-      description: 'Outdated web development group',
+      id: '3',
+      name: 'Legacy Database',
+      description: 'Old database technology group',
       type: 'group',
-      parentId: 'some-cluster',
-      rank: 2,
-      isActive: false,
-      usageCount: 28,
-      createdAt: new Date('2022-08-15'),
-      updatedAt: new Date('2023-11-20')
-    },
-    {
-      id: 'inactive-4',
-      name: 'Silverlight Programming',
-      description: 'Microsoft Silverlight development',
-      type: 'skill',
-      parentId: 'some-group',
-      rank: 1,
-      isActive: false,
-      usageCount: 8,
-      createdAt: new Date('2022-03-20'),
-      updatedAt: new Date('2023-10-15')
+      parentName: 'Data Management',
+      inactivatedAt: new Date('2024-03-10'),
+      inactivatedBy: 'Tech Lead',
+      usageCount: 22
     }
+  ]);
+
+  const typeOptions = [
+    { value: 'all', label: 'All', count: inactiveItems.length },
+    { value: 'cluster', label: 'Cluster', count: inactiveItems.filter(item => item.type === 'cluster').length },
+    { value: 'group', label: 'Group', count: inactiveItems.filter(item => item.type === 'group').length },
+    { value: 'skill', label: 'Skill', count: inactiveItems.filter(item => item.type === 'skill').length },
+    { value: 'proficiency', label: 'Proficiency', count: inactiveItems.filter(item => item.type === 'proficiency').length }
   ];
 
-  const filteredItems = inactiveItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         item.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || item.type === typeFilter;
-    
-    return matchesSearch && matchesType;
-  });
+  const getFilteredData = () => {
+    let filtered = inactiveItems;
 
-  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  const handleRestore = (item: TaxonomyNode) => {
-    toast({
-      title: "Restored",
-      description: `${item.type} "${item.name}" has been restored successfully.`,
-    });
-  };
-
-  const getDaysInactive = (updatedAt: Date): number => {
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - updatedAt.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
-
-  const getRetentionWarning = (daysInactive: number): string => {
-    const daysLeft = 30 - daysInactive;
-    if (daysLeft <= 0) {
-      return 'Inactive';
-    } else if (daysLeft <= 7) {
-      return `Will be auto-deleted in ${daysLeft} days`;
+    // Filter by type
+    if (!selectedTypes.includes('all')) {
+      filtered = filtered.filter(item => selectedTypes.includes(item.type));
     }
-    return '';
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(item => 
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.parentName?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return filtered;
+  };
+
+  const filteredData = getFilteredData();
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handleTypeFilter = (type: string) => {
+    if (type === 'all') {
+      setSelectedTypes(['all']);
+    } else {
+      const newTypes = selectedTypes.includes('all') 
+        ? [type]
+        : selectedTypes.includes(type)
+          ? selectedTypes.filter(t => t !== type)
+          : [...selectedTypes.filter(t => t !== 'all'), type];
+      
+      setSelectedTypes(newTypes.length === 0 ? ['all'] : newTypes);
+    }
+    setCurrentPage(1);
+  };
+
+  const handleRestore = (item: InactiveItem) => {
+    toast({
+      title: "Item Restored",
+      description: `${item.type} "${item.name}" has been restored to the active taxonomy.`
+    });
   };
 
   const getTypeColor = (type: string) => {
@@ -114,12 +126,17 @@ const InactiveBinPage = () => {
       case 'cluster': return 'bg-blue-100 text-blue-800';
       case 'group': return 'bg-green-100 text-green-800';
       case 'skill': return 'bg-purple-100 text-purple-800';
+      case 'proficiency': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const clearTypeFilter = () => setTypeFilter('all');
-  const clearSearchFilter = () => setSearchTerm('');
+  const getBubbleVariant = (type: string, isSelected: boolean) => {
+    if (isSelected) {
+      return "default";
+    }
+    return "outline";
+  };
 
   return (
     <SidebarProvider>
@@ -135,189 +152,165 @@ const InactiveBinPage = () => {
                 <h1 className="text-2xl md:text-3xl font-black text-jio-dark font-inter">Inactive Bin</h1>
                 <p className="text-muted-foreground font-inter">Manage inactivated taxonomy items</p>
               </div>
-              <Badge variant="outline" className="text-sm font-inter">
-                {filteredItems.length} items found
-              </Badge>
             </div>
 
-            {/* Search */}
+            {/* Warning Alert */}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+                <div>
+                  <h3 className="font-medium text-orange-800 font-inter">Items are Inactive</h3>
+                  <p className="text-sm text-orange-700 font-inter">
+                    These items have been inactivated and can be restored within 30 days. After that, they may be permanently removed.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters and Search */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-bold text-jio-dark font-inter">Search & Filters</CardTitle>
+                <CardTitle className="font-bold text-jio-dark font-inter">Filter & Search</CardTitle>
+                <CardDescription className="font-inter">
+                  Filter by type and search through inactive items
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search items..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 font-inter"
-                    />
-                  </div>
-
-                  {/* Filter Bubbles */}
+              <CardContent className="space-y-4">
+                {/* Type Bubble Filters */}
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2 font-inter">Type</h4>
                   <div className="flex flex-wrap gap-2">
-                    <div className="flex flex-wrap gap-2">
-                      {['cluster', 'group', 'skill'].map((type) => (
-                        <Badge
-                          key={type}
-                          variant={typeFilter === type ? "default" : "outline"}
-                          className={`cursor-pointer capitalize font-inter ${
-                            typeFilter === type ? 'bg-jio-blue hover:bg-jio-blue/90' : ''
-                          }`}
-                          onClick={() => setTypeFilter(typeFilter === type ? 'all' : type)}
-                        >
-                          {type}
-                          {typeFilter === type && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                clearTypeFilter();
-                              }}
-                              className="ml-1 hover:bg-white/20 rounded-full p-0.5"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          )}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    {/* Applied Filters */}
-                    {searchTerm && (
-                      <Badge variant="secondary" className="flex items-center gap-1 font-inter">
-                        Search: "{searchTerm}"
-                        <button onClick={clearSearchFilter} className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    )}
+                    {typeOptions.map((option) => (
+                      <Button
+                        key={option.value}
+                        variant={getBubbleVariant(option.value, selectedTypes.includes(option.value))}
+                        size="sm"
+                        onClick={() => handleTypeFilter(option.value)}
+                        className="font-inter"
+                      >
+                        {option.label} ({option.count})
+                      </Button>
+                    ))}
                   </div>
+                </div>
+
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search inactive items..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 font-inter"
+                  />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Results */}
+            {/* Inactive Items Table */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-bold text-jio-dark font-inter">Inactive Items</CardTitle>
+                <CardTitle className="font-bold text-jio-dark font-inter">
+                  Inactive Items ({filteredData.length})
+                </CardTitle>
                 <CardDescription className="font-inter">
-                  Items are kept for 30 days before permanent deletion.
+                  Items that have been inactivated and can be restored
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                {paginatedItems.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Trash2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2 font-inter">No items found</h3>
-                    <p className="text-muted-foreground font-inter">
-                      Try adjusting your filters or search terms.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="font-inter">Name</TableHead>
+                        <TableHead className="font-inter">Type</TableHead>
+                        <TableHead className="font-inter">Parent</TableHead>
+                        <TableHead className="font-inter">Description</TableHead>
+                        <TableHead className="font-inter">Inactivated</TableHead>
+                        <TableHead className="font-inter">Usage</TableHead>
+                        <TableHead className="font-inter">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedData.length === 0 ? (
                         <TableRow>
-                          <TableHead className="font-inter font-semibold">Name</TableHead>
-                          <TableHead className="font-inter font-semibold">Type</TableHead>
-                          <TableHead className="font-inter font-semibold">Usage</TableHead>
-                          <TableHead className="font-inter font-semibold">Inactive For</TableHead>
-                          <TableHead className="font-inter font-semibold">Status</TableHead>
-                          <TableHead className="font-inter font-semibold">Actions</TableHead>
+                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground font-inter">
+                            <Archive className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                            No inactive items found
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedItems.map(item => {
-                          const daysInactive = getDaysInactive(item.updatedAt);
-                          const retentionWarning = getRetentionWarning(daysInactive);
-                          
-                          return (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <div>
-                                  <p className="font-medium font-inter text-jio-dark">{item.name}</p>
-                                  {item.description && (
-                                    <p className="text-sm text-muted-foreground font-inter">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge className={getTypeColor(item.type) + " font-inter"}>
-                                  {item.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <span className="text-sm font-inter">{item.usageCount || 0} users</span>
-                              </TableCell>
-                              <TableCell>
-                                <span className="text-sm font-inter">{daysInactive} days</span>
-                              </TableCell>
-                              <TableCell>
-                                {retentionWarning && (
-                                  <div className="flex items-center gap-1">
-                                    <AlertCircle className="h-4 w-4 text-orange-500" />
-                                    <span className="text-sm text-orange-600 font-inter">
-                                      {retentionWarning}
-                                    </span>
-                                  </div>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleRestore(item)}
-                                    className="font-inter"
-                                  >
-                                    <RotateCcw className="h-4 w-4 mr-1" />
-                                    Restore
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                      ) : (
+                        paginatedData.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <div className="font-medium font-inter">{item.name}</div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getTypeColor(item.type) + " font-inter"}>
+                                {item.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-inter">{item.parentName || '-'}</TableCell>
+                            <TableCell className="max-w-64 truncate font-inter">
+                              {item.description || '-'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm font-inter">
+                                <div>{item.inactivatedAt.toLocaleDateString()}</div>
+                                <div className="text-xs text-muted-foreground">by {item.inactivatedBy}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm font-inter">{item.usageCount} users</div>
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleRestore(item)}
+                                className="text-green-600 hover:text-green-600 hover:bg-green-50 font-inter"
+                              >
+                                <RotateCcw className="h-4 w-4 mr-1" />
+                                Restore
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
 
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <div className="flex justify-center mt-4 pb-4">
-                        <Pagination>
-                          <PaginationContent>
-                            <PaginationItem>
-                              <PaginationPrevious 
-                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                              />
-                            </PaginationItem>
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                              <PaginationItem key={page}>
-                                <PaginationLink
-                                  onClick={() => setCurrentPage(page)}
-                                  isActive={currentPage === page}
-                                  className="cursor-pointer"
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            ))}
-                            <PaginationItem>
-                              <PaginationNext 
-                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                              />
-                            </PaginationItem>
-                          </PaginationContent>
-                        </Pagination>
-                      </div>
-                    )}
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center mt-4 pb-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(page)}
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
                   </div>
                 )}
               </CardContent>
@@ -329,4 +322,4 @@ const InactiveBinPage = () => {
   );
 };
 
-export default InactiveBinPage;
+export default InactiveBin;
