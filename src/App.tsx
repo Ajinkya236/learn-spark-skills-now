@@ -24,6 +24,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/skills/taxonomy" element={<TaxonomyManagement />} />
+          <Route path="/skills/taxonomy/inactive" element={<InactiveBin />} />
           <Route path="/skills/inactive-bin" element={<InactiveBin />} />
           <Route path="/skills/relationships" element={<SkillRelationships />} />
           <Route path="/skills/proficiency" element={<ProficiencyLevels />} />

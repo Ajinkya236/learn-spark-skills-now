@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
+import Header from "@/components/Header";
 
 export interface TaxonomyNode {
   id: string;
@@ -146,23 +148,35 @@ const TaxonomyManagement = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <div className="flex-1 space-y-6 p-4 md:p-6">
+          <Header />
+          <div className="flex-1 space-y-6 p-4 md:p-6 pt-20">
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">Taxonomy Management</h1>
-                <p className="text-muted-foreground">Create and manage your skills hierarchy</p>
+                <h1 className="text-2xl md:text-3xl font-black text-jio-dark font-inter">Taxonomy Management</h1>
+                <p className="text-muted-foreground font-inter">Create and manage your skills hierarchy</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={() => navigate('/skills/inactive-bin')}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/skills/taxonomy/inactive')}
+                  className="font-inter"
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   <span className="hidden sm:inline">Inactive Bin</span>
                 </Button>
-                <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setBulkImportOpen(true)}
+                  className="font-inter"
+                >
                   <Upload className="mr-2 h-4 w-4" />
                   <span className="hidden sm:inline">Bulk Import</span>
                 </Button>
-                <Button onClick={() => handleCreateNode('cluster')}>
+                <Button 
+                  onClick={() => handleCreateNode('cluster')}
+                  className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter font-semibold"
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   <span className="hidden sm:inline">New Cluster</span>
                 </Button>
@@ -170,31 +184,47 @@ const TaxonomyManagement = () => {
             </div>
 
             {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
               <TaxonomyStats data={taxonomyData} />
             </div>
 
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
-                <CardDescription>Common taxonomy management tasks</CardDescription>
+                <CardTitle className="text-lg font-bold text-jio-dark font-inter">Quick Actions</CardTitle>
+                <CardDescription className="font-inter">Common taxonomy management tasks</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <Button variant="outline" onClick={() => handleCreateNode('cluster')} className="justify-start">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleCreateNode('cluster')} 
+                    className="justify-start font-inter"
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Cluster
                   </Button>
-                  <Button variant="outline" onClick={() => handleCreateNode('group')} className="justify-start">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleCreateNode('group')} 
+                    className="justify-start font-inter"
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Group
                   </Button>
-                  <Button variant="outline" onClick={() => handleCreateNode('skill')} className="justify-start">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleCreateNode('skill')} 
+                    className="justify-start font-inter"
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Skill
                   </Button>
-                  <Button variant="outline" onClick={() => setMergeDialogOpen(true)} className="justify-start">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setMergeDialogOpen(true)} 
+                    className="justify-start font-inter"
+                  >
                     <Merge className="mr-2 h-4 w-4" />
                     Merge Items
                   </Button>
@@ -206,9 +236,9 @@ const TaxonomyManagement = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Skills Taxonomy Tree</span>
+                  <span className="font-bold text-jio-dark font-inter">Skills Taxonomy Tree</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="font-inter">
                   Organize skills into clusters, groups, and individual skills. Use drag & drop to reorder.
                 </CardDescription>
               </CardHeader>

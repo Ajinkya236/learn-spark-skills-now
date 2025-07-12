@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, AlertTriangle, Merge } from 'lucide-react';
+import { ArrowRight, AlertTriangle, Merge, Check } from 'lucide-react';
 import { TaxonomyNode } from '@/pages/skills/TaxonomyManagement';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,7 +31,7 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
   const [targetId, setTargetId] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
-  const [step, setStep] = useState<'select' | 'details' | 'preview' | 'processing'>('select');
+  const [step, setStep] = useState<'select' | 'details' | 'summary' | 'processing'>('select');
   const { toast } = useToast();
 
   const getAllNodes = (): TaxonomyNode[] => {
@@ -84,7 +85,7 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
     setTimeout(() => {
       toast({
         title: "Merge Complete",
-        description: `Successfully merged "${sourceNode?.name}" into "${newTitle || targetNode?.name}"`
+        description: `Successfully merged "${sourceNode?.name}" into "${newTitle}"`
       });
       onMergeComplete();
       resetDialog();
@@ -108,25 +109,25 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 font-inter font-bold text-jio-dark">
             <Merge className="h-5 w-5" />
             Merge Taxonomy Items
           </DialogTitle>
-          <DialogDescription>
-            Consolidate overlapping or redundant {mergeType}s by merging them
+          <DialogDescription className="font-inter">
+            Consolidate {mergeType}s by merging them together
           </DialogDescription>
         </DialogHeader>
 
         {step === 'select' && (
           <div className="space-y-6">
             <div className="space-y-2">
-              <Label>Type to Merge</Label>
+              <Label className="font-inter font-medium">Type to Merge</Label>
               <Select value={mergeType} onValueChange={(value: 'cluster' | 'group') => {
                 setMergeType(value);
                 setSourceId('');
                 setTargetId('');
               }}>
-                <SelectTrigger>
+                <SelectTrigger className="font-inter">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -138,9 +139,9 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Source {mergeType} (will be merged from)</Label>
+                <Label className="font-inter font-medium">Source {mergeType} (will be merged from)</Label>
                 <Select value={sourceId} onValueChange={setSourceId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="font-inter">
                     <SelectValue placeholder={`Select source ${mergeType}`} />
                   </SelectTrigger>
                   <SelectContent>
@@ -157,13 +158,13 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label>Target {mergeType} (will be merged into)</Label>
+                <Label className="font-inter font-medium">Target {mergeType} (will be merged into)</Label>
                 <Select 
                   value={targetId} 
                   onValueChange={setTargetId}
                   disabled={!sourceId}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="font-inter">
                     <SelectValue placeholder={`Select target ${mergeType}`} />
                   </SelectTrigger>
                   <SelectContent>
@@ -185,7 +186,7 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
             {sourceNode && targetNode && (
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
+                <AlertDescription className="font-inter">
                   All children from "{sourceNode.name}" will be moved to the merged {mergeType}. 
                   The source {mergeType} will be inactivated after merge.
                 </AlertDescription>
@@ -197,36 +198,38 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
         {step === 'details' && (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">New {mergeType} Details</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-lg font-bold mb-2 font-inter text-jio-dark">New {mergeType} Details</h3>
+              <p className="text-muted-foreground font-inter">
                 Provide title and description for the merged {mergeType}
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="font-inter font-medium">Title *</Label>
                 <Input
                   id="title"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder={`Enter merged ${mergeType} title`}
+                  className="font-inter"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
+                <Label htmlFor="description" className="font-inter font-medium">Description</Label>
+                <Textarea
                   id="description"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder={`Enter merged ${mergeType} description`}
+                  className="font-inter"
                 />
               </div>
 
               <div className="bg-muted/30 rounded-lg p-4">
-                <h4 className="font-medium mb-2">Merging:</h4>
-                <div className="flex items-center gap-2 text-sm">
+                <h4 className="font-medium mb-2 font-inter">Merging:</h4>
+                <div className="flex items-center gap-2 text-sm font-inter">
                   <span>"{sourceNode?.name}"</span>
                   <ArrowRight className="h-4 w-4" />
                   <span>"{targetNode?.name}"</span>
@@ -238,61 +241,50 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
           </div>
         )}
 
-        {step === 'preview' && mergePreview && (
+        {step === 'summary' && mergePreview && (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Merge Preview</h3>
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <Card className="flex-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Source</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="font-medium">{sourceNode?.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {mergePreview.sourceChildren.length} children
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <ArrowRight className="h-6 w-6 text-muted-foreground" />
-                
-                <Card className="flex-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Result</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="font-medium">{newTitle}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {mergePreview.totalAfterMerge} children total
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+              <h3 className="text-lg font-bold mb-2 font-inter text-jio-dark">Merge Summary</h3>
+              <p className="text-muted-foreground font-inter">Review the details before confirming</p>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-2">Merge Summary</h4>
-                <div className="bg-muted/30 rounded-lg p-4 space-y-2">
-                  <p className="text-sm">
-                    • {mergePreview.sourceChildren.length} items will be moved from source
-                  </p>
-                  <p className="text-sm">
-                    • {mergePreview.targetChildren.length} items already exist in target
-                  </p>
-                  <p className="text-sm font-medium">
-                    • Total after merge: {mergePreview.totalAfterMerge} items
-                  </p>
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-inter font-bold text-jio-dark">New {mergeType} Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label className="font-inter font-medium">Name:</Label>
+                  <p className="font-inter text-jio-dark">{newTitle}</p>
                 </div>
+                {newDescription && (
+                  <div>
+                    <Label className="font-inter font-medium">Description:</Label>
+                    <p className="font-inter text-muted-foreground">{newDescription}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+              <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                <p className="text-sm font-inter">
+                  • {mergePreview.sourceChildren.length} items will be moved from source
+                </p>
+                <p className="text-sm font-inter">
+                  • {mergePreview.targetChildren.length} items already exist in target
+                </p>
+                <p className="text-sm font-medium font-inter">
+                  • Total after merge: {mergePreview.totalAfterMerge} items
+                </p>
               </div>
 
               {mergePreview.conflicts.length > 0 && (
                 <div>
-                  <h4 className="font-medium mb-2 text-orange-600">Conflicts Detected</h4>
+                  <h4 className="font-medium mb-2 text-orange-600 font-inter">Conflicts Detected</h4>
                   <div className="border border-orange-200 rounded-lg p-4 space-y-2">
                     {mergePreview.conflicts.map((conflict) => (
-                      <div key={conflict.id} className="flex items-center justify-between text-sm">
+                      <div key={conflict.id} className="flex items-center justify-between text-sm font-inter">
                         <span>"{conflict.name}" exists in both locations</span>
                         <Badge variant="outline" className="text-orange-600">
                           Will merge
@@ -308,18 +300,19 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
 
         {step === 'processing' && (
           <div className="text-center py-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Processing merge...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-jio-blue mx-auto mb-4"></div>
+            <p className="text-muted-foreground font-inter">Processing merge...</p>
           </div>
         )}
 
         <DialogFooter>
           {step === 'select' && (
             <>
-              <Button variant="outline" onClick={resetDialog}>Cancel</Button>
+              <Button variant="outline" onClick={resetDialog} className="font-inter">Cancel</Button>
               <Button 
                 disabled={!sourceId || !targetId}
                 onClick={() => setStep('details')}
+                className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
               >
                 Next: Details
               </Button>
@@ -328,20 +321,25 @@ export const MergeDialog: React.FC<MergeDialogProps> = ({
           
           {step === 'details' && (
             <>
-              <Button variant="outline" onClick={() => setStep('select')}>Back</Button>
+              <Button variant="outline" onClick={() => setStep('select')} className="font-inter">Back</Button>
               <Button 
                 disabled={!newTitle.trim()}
-                onClick={() => setStep('preview')}
+                onClick={() => setStep('summary')}
+                className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
               >
-                Preview Merge
+                Next: Summary
               </Button>
             </>
           )}
           
-          {step === 'preview' && (
+          {step === 'summary' && (
             <>
-              <Button variant="outline" onClick={() => setStep('details')}>Back</Button>
-              <Button onClick={handleMerge}>
+              <Button variant="outline" onClick={() => setStep('details')} className="font-inter">Back</Button>
+              <Button 
+                onClick={handleMerge}
+                className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter"
+              >
+                <Check className="h-4 w-4 mr-2" />
                 Confirm Merge
               </Button>
             </>

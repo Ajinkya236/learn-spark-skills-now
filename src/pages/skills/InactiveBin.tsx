@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
+import Header from "@/components/Header";
 
 const InactiveBinPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,14 +114,15 @@ const InactiveBinPage = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <div className="flex-1 space-y-6 p-4 md:p-6">
+          <Header />
+          <div className="flex-1 space-y-6 p-4 md:p-6 pt-20">
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">Inactive Bin</h1>
-                <p className="text-muted-foreground">Manage inactivated taxonomy items</p>
+                <h1 className="text-2xl md:text-3xl font-black text-jio-dark font-inter">Inactive Bin</h1>
+                <p className="text-muted-foreground font-inter">Manage inactivated taxonomy items</p>
               </div>
-              <Badge variant="outline" className="text-sm">
+              <Badge variant="outline" className="text-sm font-inter">
                 {filteredItems.length} items found
               </Badge>
             </div>
@@ -128,7 +130,7 @@ const InactiveBinPage = () => {
             {/* Filters */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-bold text-jio-dark font-inter">
                   <Filter className="h-5 w-5" />
                   Filters
                 </CardTitle>
@@ -136,22 +138,22 @@ const InactiveBinPage = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Search</label>
+                    <label className="text-sm font-medium font-inter">Search</label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="Search items..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9"
+                        className="pl-9 font-inter"
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Type</label>
+                    <label className="text-sm font-medium font-inter">Type</label>
                     <Select value={typeFilter} onValueChange={setTypeFilter}>
-                      <SelectTrigger>
+                      <SelectTrigger className="font-inter">
                         <SelectValue placeholder="All types" />
                       </SelectTrigger>
                       <SelectContent>
@@ -164,9 +166,9 @@ const InactiveBinPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Status</label>
+                    <label className="text-sm font-medium font-inter">Status</label>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger>
+                      <SelectTrigger className="font-inter">
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -181,7 +183,7 @@ const InactiveBinPage = () => {
                 {/* Filter Bubbles */}
                 <div className="flex flex-wrap gap-2 mt-4">
                   {typeFilter !== 'all' && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
+                    <Badge variant="secondary" className="flex items-center gap-1 font-inter">
                       Type: {typeFilter}
                       <button onClick={() => setTypeFilter('all')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5">
                         ×
@@ -189,7 +191,7 @@ const InactiveBinPage = () => {
                     </Badge>
                   )}
                   {statusFilter !== 'inactive' && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
+                    <Badge variant="secondary" className="flex items-center gap-1 font-inter">
                       Status: {statusFilter}
                       <button onClick={() => setStatusFilter('inactive')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5">
                         ×
@@ -197,7 +199,7 @@ const InactiveBinPage = () => {
                     </Badge>
                   )}
                   {searchTerm && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
+                    <Badge variant="secondary" className="flex items-center gap-1 font-inter">
                       Search: "{searchTerm}"
                       <button onClick={() => setSearchTerm('')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full p-0.5">
                         ×
@@ -211,8 +213,8 @@ const InactiveBinPage = () => {
             {/* Results */}
             <Card>
               <CardHeader>
-                <CardTitle>Inactive Items</CardTitle>
-                <CardDescription>
+                <CardTitle className="font-bold text-jio-dark font-inter">Inactive Items</CardTitle>
+                <CardDescription className="font-inter">
                   Items are kept for 30 days before permanent deletion.
                 </CardDescription>
               </CardHeader>
@@ -220,8 +222,8 @@ const InactiveBinPage = () => {
                 {filteredItems.length === 0 ? (
                   <div className="text-center py-8">
                     <Trash2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No items found</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="text-lg font-medium mb-2 font-inter">No items found</h3>
+                    <p className="text-muted-foreground font-inter">
                       Try adjusting your filters or search terms.
                     </p>
                   </div>
@@ -230,12 +232,12 @@ const InactiveBinPage = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Usage</TableHead>
-                          <TableHead>Inactive For</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
+                          <TableHead className="font-inter font-semibold">Name</TableHead>
+                          <TableHead className="font-inter font-semibold">Type</TableHead>
+                          <TableHead className="font-inter font-semibold">Usage</TableHead>
+                          <TableHead className="font-inter font-semibold">Inactive For</TableHead>
+                          <TableHead className="font-inter font-semibold">Status</TableHead>
+                          <TableHead className="font-inter font-semibold">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -247,30 +249,30 @@ const InactiveBinPage = () => {
                             <TableRow key={item.id}>
                               <TableCell>
                                 <div>
-                                  <p className="font-medium">{item.name}</p>
+                                  <p className="font-medium font-inter text-jio-dark">{item.name}</p>
                                   {item.description && (
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm text-muted-foreground font-inter">
                                       {item.description}
                                     </p>
                                   )}
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Badge className={getTypeColor(item.type)}>
+                                <Badge className={getTypeColor(item.type) + " font-inter"}>
                                   {item.type}
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                <span className="text-sm">{item.usageCount || 0} users</span>
+                                <span className="text-sm font-inter">{item.usageCount || 0} users</span>
                               </TableCell>
                               <TableCell>
-                                <span className="text-sm">{daysInactive} days</span>
+                                <span className="text-sm font-inter">{daysInactive} days</span>
                               </TableCell>
                               <TableCell>
                                 {retentionWarning && (
                                   <div className="flex items-center gap-1">
                                     <AlertCircle className="h-4 w-4 text-orange-500" />
-                                    <span className="text-sm text-orange-600">
+                                    <span className="text-sm text-orange-600 font-inter">
                                       {retentionWarning}
                                     </span>
                                   </div>
@@ -282,6 +284,7 @@ const InactiveBinPage = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleRestore(item)}
+                                    className="font-inter"
                                   >
                                     <RotateCcw className="h-4 w-4 mr-1" />
                                     Restore
@@ -290,7 +293,7 @@ const InactiveBinPage = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handlePermanentDelete(item)}
-                                    className="text-destructive hover:text-destructive"
+                                    className="text-destructive hover:text-destructive font-inter"
                                   >
                                     <Trash2 className="h-4 w-4 mr-1" />
                                     Delete
