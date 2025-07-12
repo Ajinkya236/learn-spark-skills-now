@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { TaxonomyNode, ProficiencyLevel } from '@/pages/skills/TaxonomyManagement';
 import { useToast } from '@/hooks/use-toast';
-
 interface CreateNodeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -18,7 +16,6 @@ interface CreateNodeDialogProps {
   existingNodes: TaxonomyNode[];
   onNodeCreated: (node: Partial<TaxonomyNode>) => void;
 }
-
 export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
   open,
   onOpenChange,
@@ -33,32 +30,29 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
     parentId: '',
     rank: 1
   });
-  const [proficiencyLevels, setProficiencyLevels] = useState<Omit<ProficiencyLevel, 'id'>[]>([
-    {
-      title: 'Beginner',
-      description: '',
-      minScore: 0,
-      maxScore: 25,
-      order: 1
-    },
-    {
-      title: 'Intermediate',
-      description: '',
-      minScore: 26,
-      maxScore: 75,
-      order: 2
-    },
-    {
-      title: 'Expert',
-      description: '',
-      minScore: 76,
-      maxScore: 100,
-      order: 3
-    }
-  ]);
+  const [proficiencyLevels, setProficiencyLevels] = useState<Omit<ProficiencyLevel, 'id'>[]>([{
+    title: 'Beginner',
+    description: '',
+    minScore: 0,
+    maxScore: 25,
+    order: 1
+  }, {
+    title: 'Intermediate',
+    description: '',
+    minScore: 26,
+    maxScore: 75,
+    order: 2
+  }, {
+    title: 'Expert',
+    description: '',
+    minScore: 76,
+    maxScore: 100,
+    order: 3
+  }]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const getAvailableParents = () => {
     const parents: TaxonomyNode[] = [];
     const traverse = (nodes: TaxonomyNode[]) => {
@@ -76,7 +70,6 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
     traverse(existingNodes);
     return parents;
   };
-
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -119,11 +112,9 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
         }
       });
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = () => {
     if (!validateForm()) {
       toast({
@@ -133,7 +124,6 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
       });
       return;
     }
-
     const nodeData: Partial<TaxonomyNode> = {
       ...formData,
       type: nodeType,
@@ -143,7 +133,6 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
         id: `${Date.now()}_${index}`
       })) : undefined
     };
-
     onNodeCreated(nodeData);
 
     // Reset form
@@ -154,32 +143,27 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
       parentId: '',
       rank: 1
     });
-    setProficiencyLevels([
-      {
-        title: 'Beginner',
-        description: '',
-        minScore: 0,
-        maxScore: 25,
-        order: 1
-      },
-      {
-        title: 'Intermediate',
-        description: '',
-        minScore: 26,
-        maxScore: 75,
-        order: 2
-      },
-      {
-        title: 'Expert',
-        description: '',
-        minScore: 76,
-        maxScore: 100,
-        order: 3
-      }
-    ]);
+    setProficiencyLevels([{
+      title: 'Beginner',
+      description: '',
+      minScore: 0,
+      maxScore: 25,
+      order: 1
+    }, {
+      title: 'Intermediate',
+      description: '',
+      minScore: 26,
+      maxScore: 75,
+      order: 2
+    }, {
+      title: 'Expert',
+      description: '',
+      minScore: 76,
+      maxScore: 100,
+      order: 3
+    }]);
     setErrors({});
   };
-
   const addProficiencyLevel = () => {
     const newLevel: Omit<ProficiencyLevel, 'id'> = {
       title: '',
@@ -190,19 +174,18 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
     };
     setProficiencyLevels([...proficiencyLevels, newLevel]);
   };
-
   const removeProficiencyLevel = (index: number) => {
     setProficiencyLevels(proficiencyLevels.filter((_, i) => i !== index));
   };
-
   const updateProficiencyLevel = (index: number, field: keyof Omit<ProficiencyLevel, 'id'>, value: string | number) => {
     const updated = [...proficiencyLevels];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = {
+      ...updated[index],
+      [field]: value
+    };
     setProficiencyLevels(updated);
   };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+  return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New {nodeType.charAt(0).toUpperCase() + nodeType.slice(1)}</DialogTitle>
@@ -216,166 +199,56 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={`Enter ${nodeType} name`}
-              />
+              <Input id="name" value={formData.name} onChange={e => setFormData({
+              ...formData,
+              name: e.target.value
+            })} placeholder={`Enter ${nodeType} name`} />
               {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="rank">Rank *</Label>
-              <Input
-                id="rank"
-                type="number"
-                min="1"
-                value={formData.rank}
-                onChange={(e) => setFormData({ ...formData, rank: parseInt(e.target.value) || 1 })}
-              />
-              {errors.rank && <p className="text-sm text-destructive">{errors.rank}</p>}
-            </div>
+            
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder={`Describe this ${nodeType}`}
-            />
+            <Textarea id="description" value={formData.description} onChange={e => setFormData({
+            ...formData,
+            description: e.target.value
+          })} placeholder={`Describe this ${nodeType}`} />
           </div>
 
           {/* Category for Clusters */}
-          {nodeType === 'cluster' && (
-            <div className="space-y-2">
+          {nodeType === 'cluster' && <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                placeholder="Enter category"
-              />
-            </div>
-          )}
+              <Input id="category" value={formData.category} onChange={e => setFormData({
+            ...formData,
+            category: e.target.value
+          })} placeholder="Enter category" />
+            </div>}
 
           {/* Parent Selection */}
-          {(nodeType === 'group' || nodeType === 'skill') && (
-            <div className="space-y-2">
+          {(nodeType === 'group' || nodeType === 'skill') && <div className="space-y-2">
               <Label htmlFor="parent">
                 Parent {nodeType === 'group' ? 'Cluster' : 'Group'} *
               </Label>
-              <Select value={formData.parentId} onValueChange={(value) => setFormData({ ...formData, parentId: value })}>
+              <Select value={formData.parentId} onValueChange={value => setFormData({
+            ...formData,
+            parentId: value
+          })}>
                 <SelectTrigger>
                   <SelectValue placeholder={`Select parent ${nodeType === 'group' ? 'cluster' : 'group'}`} />
                 </SelectTrigger>
                 <SelectContent>
-                  {getAvailableParents().map(parent => (
-                    <SelectItem key={parent.id} value={parent.id}>
+                  {getAvailableParents().map(parent => <SelectItem key={parent.id} value={parent.id}>
                       {parent.name}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
               {errors.parentId && <p className="text-sm text-destructive">{errors.parentId}</p>}
-            </div>
-          )}
+            </div>}
 
           {/* Proficiency Levels for Skills */}
-          {nodeType === 'skill' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Proficiency Levels</span>
-                  <Button variant="outline" size="sm" onClick={addProficiencyLevel}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Level
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {proficiencyLevels.map((level, index) => (
-                  <div key={index} className="p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Level {index + 1}</h4>
-                      {proficiencyLevels.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeProficiencyLevel(index)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label>Title *</Label>
-                        <Input
-                          value={level.title}
-                          onChange={(e) => updateProficiencyLevel(index, 'title', e.target.value)}
-                          placeholder="e.g., Beginner"
-                        />
-                        {errors[`proficiency_${index}_title`] && (
-                          <p className="text-sm text-destructive">{errors[`proficiency_${index}_title`]}</p>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Order</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={level.order}
-                          onChange={(e) => updateProficiencyLevel(index, 'order', parseInt(e.target.value) || 1)}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Description *</Label>
-                      <Textarea
-                        value={level.description}
-                        onChange={(e) => updateProficiencyLevel(index, 'description', e.target.value)}
-                        placeholder="Describe this proficiency level"
-                      />
-                      {errors[`proficiency_${index}_description`] && (
-                        <p className="text-sm text-destructive">{errors[`proficiency_${index}_description`]}</p>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label>Min Score</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={level.minScore}
-                          onChange={(e) => updateProficiencyLevel(index, 'minScore', parseInt(e.target.value) || 0)}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Max Score</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={level.maxScore}
-                          onChange={(e) => updateProficiencyLevel(index, 'maxScore', parseInt(e.target.value) || 100)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+          {nodeType === 'skill'}
         </div>
 
         <DialogFooter>
@@ -387,6 +260,5 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
