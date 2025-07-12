@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import TaxonomyManagement from "./pages/skills/TaxonomyManagement";
+import InactiveBin from "./pages/skills/InactiveBin";
 import SkillRelationships from "./pages/skills/SkillRelationships";
 import ProficiencyLevels from "./pages/skills/ProficiencyLevels";
 import NotFound from "./pages/NotFound";
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/skills/taxonomy" element={<TaxonomyManagement />} />
+          <Route path="/skills/inactive-bin" element={<InactiveBin />} />
           <Route path="/skills/relationships" element={<SkillRelationships />} />
           <Route path="/skills/proficiency" element={<ProficiencyLevels />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

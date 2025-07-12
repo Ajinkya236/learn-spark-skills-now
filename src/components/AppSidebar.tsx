@@ -18,7 +18,8 @@ import {
   Award,
   Route,
   Briefcase,
-  UserPlus
+  UserPlus,
+  Trash2
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -50,6 +51,7 @@ const menuItems = [
     icon: Brain,
     items: [
       { title: "Taxonomy Management", url: "/skills/taxonomy", icon: GitBranch },
+      { title: "Inactive Bin", url: "/skills/inactive-bin", icon: Trash2 },
       { title: "Skill Relationships", url: "/skills/relationships", icon: Network },
       { title: "Proficiency Levels", url: "/skills/proficiency", icon: Target },
     ],

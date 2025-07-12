@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Upload, Download, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface BulkImportDialogProps {
@@ -18,12 +18,11 @@ interface BulkImportDialogProps {
 }
 
 interface ImportRow {
-  id: number;
-  type: string;
   name: string;
   description: string;
+  type: 'cluster' | 'group' | 'skill';
   parent: string;
-  rank: number;
+  proficiencyLevels: string;
   status: 'pending' | 'success' | 'error';
   error?: string;
 }
@@ -33,146 +32,140 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
   onOpenChange,
   onImportComplete
 }) => {
-  const [step, setStep] = useState<'upload' | 'preview' | 'processing' | 'complete'>('upload');
+  const [step, setStep] = useState<'upload' | 'validate' | 'import' | 'complete'>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [importData, setImportData] = useState<ImportRow[]>([]);
   const [progress, setProgress] = useState(0);
-  const [successCount, setSuccessCount] = useState(0);
-  const [errorCount, setErrorCount] = useState(0);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      // Parse file and preview
-      parseFile(selectedFile);
+  const sampleData: ImportRow[] = [
+    {
+      name: 'Data Science',
+      description: 'Data science and analytics cluster',
+      type: 'cluster',
+      parent: '',
+      proficiencyLevels: '',
+      status: 'pending'
+    },
+    {
+      name: 'Machine Learning',
+      description: 'ML algorithms and techniques',
+      type: 'group',
+      parent: 'Data Science',
+      proficiencyLevels: '',
+      status: 'pending'
+    },
+    {
+      name: 'Python for ML',
+      description: 'Python programming for machine learning',
+      type: 'skill',
+      parent: 'Machine Learning',
+      proficiencyLevels: 'Beginner|Intermediate|Advanced',
+      status: 'pending'
     }
-  };
-
-  const parseFile = (file: File) => {
-    // Mock file parsing - in real app, use proper CSV/Excel parser
-    const mockData: ImportRow[] = [
-      {
-        id: 1,
-        type: 'cluster',
-        name: 'Data Science',
-        description: 'Data science and analytics skills',
-        parent: '',
-        rank: 1,
-        status: 'pending'
-      },
-      {
-        id: 2,
-        type: 'group',
-        name: 'Machine Learning',
-        description: 'Machine learning algorithms and techniques',
-        parent: 'Data Science',
-        rank: 1,
-        status: 'pending'
-      },
-      {
-        id: 3,
-        type: 'skill',
-        name: 'TensorFlow',
-        description: 'TensorFlow framework expertise',
-        parent: 'Machine Learning',
-        rank: 1,
-        status: 'pending'
-      },
-      {
-        id: 4,
-        type: 'skill',
-        name: 'Python Programming',
-        description: 'Duplicate skill for testing',
-        parent: 'Machine Learning',
-        rank: 1,
-        status: 'pending',
-        error: 'Duplicate name in parent scope'
-      }
-    ];
-
-    setImportData(mockData);
-    setStep('preview');
-  };
-
-  const validateData = () => {
-    const validated = importData.map(row => {
-      const errors = [];
-      
-      if (!row.name.trim()) {
-        errors.push('Name is required');
-      }
-      
-      if (row.type === 'skill' && row.name === 'Python Programming') {
-        errors.push('Skill already exists in this group');
-      }
-      
-      if (row.rank <= 0) {
-        errors.push('Rank must be positive');
-      }
-      
-      return {
-        ...row,
-        status: errors.length > 0 ? 'error' as const : 'pending' as const,
-        error: errors.join(', ')
-      };
-    });
-    
-    setImportData(validated);
-  };
-
-  const processImport = () => {
-    setStep('processing');
-    setProgress(0);
-    
-    // Simulate import process
-    let processed = 0;
-    let successes = 0;
-    let errors = 0;
-    
-    const processRow = () => {
-      if (processed < importData.length) {
-        const row = importData[processed];
-        
-        setTimeout(() => {
-          if (row.status === 'error') {
-            errors++;
-          } else {
-            successes++;
-          }
-          
-          processed++;
-          setProgress((processed / importData.length) * 100);
-          
-          if (processed < importData.length) {
-            processRow();
-          } else {
-            setSuccessCount(successes);
-            setErrorCount(errors);
-            setStep('complete');
-          }
-        }, 200);
-      }
-    };
-    
-    processRow();
-  };
+  ];
 
   const downloadTemplate = () => {
-    // Create and download CSV template
-    const csvContent = `Type,Name,Description,Parent,Rank,Category
-cluster,Technical Skills,All technical skills,,1,Technical
-group,Programming Languages,Software development languages,Technical Skills,1,
-skill,Python,Python programming language,Programming Languages,1,`;
-    
+    const headers = ['name', 'description', 'type', 'parent', 'proficiencyLevels'];
+    const csvContent = [
+      headers.join(','),
+      ...sampleData.map(row => [
+        `"${row.name}"`,
+        `"${row.description}"`,
+        row.type,
+        `"${row.parent}"`,
+        `"${row.proficiencyLevels}"`
+      ].join(','))
+    ].join('\n');
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'taxonomy_template.csv';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Template Downloaded",
+      description: "CSV template has been downloaded to your device."
+    });
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFile = event.target.files?.[0];
+    if (uploadedFile) {
+      setFile(uploadedFile);
+      // Simulate file parsing
+      setTimeout(() => {
+        setImportData(sampleData);
+        setStep('validate');
+      }, 1000);
+    }
+  };
+
+  const validateData = () => {
+    const errors: string[] = [];
+    
+    importData.forEach((row, index) => {
+      if (!row.name.trim()) {
+        errors.push(`Row ${index + 1}: Name is required`);
+      }
+      if (!['cluster', 'group', 'skill'].includes(row.type)) {
+        errors.push(`Row ${index + 1}: Invalid type "${row.type}"`);
+      }
+      if (row.type !== 'cluster' && !row.parent.trim()) {
+        errors.push(`Row ${index + 1}: Parent is required for ${row.type}`);
+      }
+      if (row.type === 'skill' && !row.proficiencyLevels.trim()) {
+        errors.push(`Row ${index + 1}: Proficiency levels are required for skills`);
+      }
+    });
+
+    setValidationErrors(errors);
+    
+    if (errors.length === 0) {
+      setStep('import');
+      simulateImport();
+    }
+  };
+
+  const simulateImport = () => {
+    let currentProgress = 0;
+    const totalRows = importData.length;
+    
+    const updateProgress = () => {
+      if (currentProgress < totalRows) {
+        setProgress((currentProgress / totalRows) * 100);
+        
+        // Simulate some rows having errors
+        const updatedData = [...importData];
+        if (currentProgress === 1) {
+          updatedData[1].status = 'error';
+          updatedData[1].error = 'Parent "Data Science" not found';
+        } else {
+          updatedData[currentProgress].status = 'success';
+        }
+        setImportData(updatedData);
+        
+        currentProgress++;
+        setTimeout(updateProgress, 500);
+      } else {
+        setProgress(100);
+        setStep('complete');
+      }
+    };
+    
+    updateProgress();
+  };
+
+  const handleComplete = () => {
+    onImportComplete();
+    resetDialog();
   };
 
   const resetDialog = () => {
@@ -180,129 +173,185 @@ skill,Python,Python programming language,Programming Languages,1,`;
     setFile(null);
     setImportData([]);
     setProgress(0);
-    setSuccessCount(0);
-    setErrorCount(0);
-  };
-
-  const handleClose = () => {
-    resetDialog();
+    setValidationErrors([]);
     onOpenChange(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'success':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'error':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      case 'success': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error': return <XCircle className="h-4 w-4 text-red-500" />;
+      default: return <div className="h-4 w-4 rounded-full bg-gray-300" />;
     }
   };
+
+  const successCount = importData.filter(row => row.status === 'success').length;
+  const errorCount = importData.filter(row => row.status === 'error').length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Bulk Import Taxonomy</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            Bulk Import Taxonomy
+          </DialogTitle>
           <DialogDescription>
-            Upload CSV or Excel file to import taxonomy data in bulk
+            Import multiple taxonomy items from CSV or Excel files
           </DialogDescription>
         </DialogHeader>
 
         {step === 'upload' && (
           <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={downloadTemplate}>
-                <Download className="mr-2 h-4 w-4" />
-                Download Template
-              </Button>
+            <div className="text-center">
+              <div className="border-2 border-dashed border-muted rounded-lg p-8">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Upload Your File</h3>
+                <p className="text-muted-foreground mb-4">
+                  Select a CSV or Excel file containing your taxonomy data
+                </p>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                
+                <Button onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Choose File
+                </Button>
+                
+                {file && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Selected: {file.name}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="file-upload">Upload File</Label>
-              <Input
-                id="file-upload"
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={handleFileChange}
-              />
-              <p className="text-sm text-muted-foreground">
-                Supported formats: CSV, Excel (.xlsx, .xls)
-              </p>
-            </div>
-
-            {file && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Need a template?</h4>
+                <Button variant="outline" onClick={downloadTemplate}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Template
+                </Button>
+              </div>
+              
               <Alert>
-                <Upload className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  File "{file.name}" uploaded successfully. Click Next to preview the data.
+                  <strong>Required columns:</strong> name, description, type, parent, proficiencyLevels
+                  <br />
+                  <strong>Note:</strong> Parent should be empty for clusters. For skills, separate proficiency levels with "|"
                 </AlertDescription>
               </Alert>
-            )}
+            </div>
           </div>
         )}
 
-        {step === 'preview' && (
-          <div className="space-y-4">
+        {step === 'validate' && (
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Import Preview</h3>
-              <Button variant="outline" onClick={validateData}>
-                Validate Data
-              </Button>
+              <h3 className="text-lg font-semibold">Data Validation</h3>
+              <Badge variant="outline">
+                {importData.length} rows found
+              </Badge>
             </div>
 
-            <div className="border rounded-lg max-h-96 overflow-auto">
+            {validationErrors.length > 0 && (
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <p><strong>Validation errors found:</strong></p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {validationErrors.map((error, index) => (
+                        <li key={index} className="text-sm">{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="border rounded-lg max-h-64 overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Type</TableHead>
                     <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Parent</TableHead>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>Error</TableHead>
+                    <TableHead>Description</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {importData.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{getStatusIcon(row.status)}</TableCell>
+                  {importData.map((row, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{row.type}</Badge>
                       </TableCell>
-                      <TableCell className="font-medium">{row.name}</TableCell>
-                      <TableCell>{row.parent}</TableCell>
-                      <TableCell>{row.rank}</TableCell>
-                      <TableCell className="text-sm text-red-600">
-                        {row.error}
-                      </TableCell>
+                      <TableCell>{row.parent || '-'}</TableCell>
+                      <TableCell className="max-w-48 truncate">{row.description}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
-
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Found {importData.filter(r => r.status === 'error').length} errors. 
-                Only valid rows will be imported.
-              </AlertDescription>
-            </Alert>
           </div>
         )}
 
-        {step === 'processing' && (
-          <div className="space-y-6 text-center">
-            <div>
-              <h3 className="text-lg font-medium mb-2">Processing Import</h3>
-              <p className="text-muted-foreground">Please wait while we import your data...</p>
+        {step === 'import' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-2">Importing Data</h3>
+              <p className="text-muted-foreground">Please wait while we process your data...</p>
             </div>
-            
-            <div className="space-y-2">
-              <Progress value={progress} className="w-full" />
-              <p className="text-sm text-muted-foreground">{Math.round(progress)}% complete</p>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progress</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} />
+              </div>
+
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Error</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {importData.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          {getStatusIcon(row.status)}
+                        </TableCell>
+                        <TableCell className="font-medium">{row.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{row.type}</Badge>
+                        </TableCell>
+                        <TableCell className="text-red-600 text-sm">
+                          {row.error || ''}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
         )}
@@ -310,52 +359,55 @@ skill,Python,Python programming language,Programming Languages,1,`;
         {step === 'complete' && (
           <div className="space-y-6 text-center">
             <div>
-              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Import Complete</h3>
+              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Import Complete</h3>
               <p className="text-muted-foreground">
-                Successfully imported {successCount} items. {errorCount} items failed.
+                Your taxonomy data has been processed
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-green-50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-green-600">{successCount}</div>
-                <div className="text-sm text-green-700">Successful</div>
+                <div className="text-sm text-green-700">Successfully imported</div>
               </div>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="bg-red-50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-red-600">{errorCount}</div>
-                <div className="text-sm text-red-700">Failed</div>
+                <div className="text-sm text-red-700">Failed to import</div>
               </div>
             </div>
+
+            {errorCount > 0 && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Some items couldn't be imported due to validation errors. 
+                  Please review and fix the issues, then try importing again.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
 
         <DialogFooter>
           {step === 'upload' && (
-            <>
-              <Button variant="outline" onClick={handleClose}>Cancel</Button>
-              <Button disabled={!file} onClick={() => setStep('preview')}>
-                Next
-              </Button>
-            </>
+            <Button variant="outline" onClick={resetDialog}>Cancel</Button>
           )}
           
-          {step === 'preview' && (
+          {step === 'validate' && (
             <>
               <Button variant="outline" onClick={() => setStep('upload')}>Back</Button>
-              <Button onClick={processImport}>
-                Import Data
+              <Button 
+                onClick={validateData}
+                disabled={validationErrors.length > 0}
+              >
+                {validationErrors.length > 0 ? 'Fix Errors First' : 'Start Import'}
               </Button>
             </>
           )}
           
           {step === 'complete' && (
-            <Button onClick={() => {
-              onImportComplete();
-              handleClose();
-            }}>
-              Done
-            </Button>
+            <Button onClick={handleComplete}>Done</Button>
           )}
         </DialogFooter>
       </DialogContent>

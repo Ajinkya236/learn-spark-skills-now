@@ -7,9 +7,13 @@ import { CreateNodeDialog } from "@/components/taxonomy/CreateNodeDialog";
 import { EditNodeDialog } from "@/components/taxonomy/EditNodeDialog";
 import { BulkImportDialog } from "@/components/taxonomy/BulkImportDialog";
 import { MergeDialog } from "@/components/taxonomy/MergeDialog";
-import { InactiveBin } from "@/components/taxonomy/InactiveBin";
 import { TaxonomyStats } from "@/components/taxonomy/TaxonomyStats";
 import { useToast } from "@/hooks/use-toast";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
+import { useNavigate } from "react-router-dom";
+
 export interface TaxonomyNode {
   id: string;
   name: string;
@@ -25,6 +29,7 @@ export interface TaxonomyNode {
   createdAt: Date;
   updatedAt: Date;
 }
+
 export interface ProficiencyLevel {
   id: string;
   title: string;
@@ -33,19 +38,17 @@ export interface ProficiencyLevel {
   maxScore: number;
   order: number;
 }
+
 const TaxonomyManagement = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
-  const [inactiveBinOpen, setInactiveBinOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<TaxonomyNode | null>(null);
   const [selectedNodeType, setSelectedNodeType] = useState<'cluster' | 'group' | 'skill'>('cluster');
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  // Mock data - in real app this would come from API
   const [taxonomyData, setTaxonomyData] = useState<TaxonomyNode[]>([{
     id: '1',
     name: 'Technical Skills',
@@ -104,136 +107,165 @@ const TaxonomyManagement = () => {
       }]
     }]
   }]);
+
   const handleCreateNode = (type: 'cluster' | 'group' | 'skill') => {
     setSelectedNodeType(type);
     setCreateDialogOpen(true);
   };
+
   const handleEditNode = (node: TaxonomyNode) => {
     setSelectedNode(node);
     setEditDialogOpen(true);
   };
+
   const handleNodeCreated = (nodeData: Partial<TaxonomyNode>) => {
-    // Implementation for creating new node
     toast({
       title: "Success",
       description: `${nodeData.type} "${nodeData.name}" created successfully.`
     });
     setCreateDialogOpen(false);
   };
+
   const handleNodeUpdated = (nodeData: Partial<TaxonomyNode>) => {
-    // Implementation for updating node
     toast({
       title: "Success",
       description: `${nodeData.type} "${nodeData.name}" updated successfully.`
     });
     setEditDialogOpen(false);
   };
+
   const handleInactivateNode = (node: TaxonomyNode) => {
-    // Implementation for inactivating node
     toast({
       title: "Success",
       description: `${node.type} "${node.name}" has been inactivated. You can restore it from the Inactive Bin.`
     });
   };
-  return <div className="flex-1 space-y-6 p-4 md:p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Taxonomy Management</h1>
-          <p className="text-muted-foreground">Create and manage your skills hierarchy</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setInactiveBinOpen(true)}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Inactive Bin</span>
-          </Button>
-          <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
-            <Upload className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Bulk Import</span>
-          </Button>
-          <Button onClick={() => handleCreateNode('cluster')}>
-            <Plus className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">New Cluster</span>
-          </Button>
-        </div>
-      </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <TaxonomyStats data={taxonomyData} />
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Quick Actions</CardTitle>
-          <CardDescription>Common taxonomy management tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Button variant="outline" onClick={() => handleCreateNode('cluster')} className="justify-start">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Cluster
-            </Button>
-            <Button variant="outline" onClick={() => handleCreateNode('group')} className="justify-start">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Group
-            </Button>
-            <Button variant="outline" onClick={() => handleCreateNode('skill')} className="justify-start">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Skill
-            </Button>
-            <Button variant="outline" onClick={() => setMergeDialogOpen(true)} className="justify-start">
-              <Merge className="mr-2 h-4 w-4" />
-              Merge Items
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Taxonomy Tree */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Skills Taxonomy Tree</span>
-            <div className="flex gap-2">
-              
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <SidebarInset className="flex-1">
+          <div className="flex-1 space-y-6 p-4 md:p-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">Taxonomy Management</h1>
+                <p className="text-muted-foreground">Create and manage your skills hierarchy</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={() => navigate('/skills/inactive-bin')}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Inactive Bin</span>
+                </Button>
+                <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Bulk Import</span>
+                </Button>
+                <Button onClick={() => handleCreateNode('cluster')}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">New Cluster</span>
+                </Button>
+              </div>
             </div>
-          </CardTitle>
-          <CardDescription>
-            Organize skills into clusters, groups, and individual skills. Use drag & drop to reorder.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <TaxonomyTree data={taxonomyData} onEdit={handleEditNode} onInactivate={handleInactivateNode} onCreateChild={handleCreateNode} />
-        </CardContent>
-      </Card>
 
-      {/* Dialogs */}
-      <CreateNodeDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} nodeType={selectedNodeType} existingNodes={taxonomyData} onNodeCreated={handleNodeCreated} />
+            {/* Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <TaxonomyStats data={taxonomyData} />
+            </div>
 
-      <EditNodeDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} node={selectedNode} existingNodes={taxonomyData} onNodeUpdated={handleNodeUpdated} />
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Quick Actions</CardTitle>
+                <CardDescription>Common taxonomy management tasks</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Button variant="outline" onClick={() => handleCreateNode('cluster')} className="justify-start">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Cluster
+                  </Button>
+                  <Button variant="outline" onClick={() => handleCreateNode('group')} className="justify-start">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Group
+                  </Button>
+                  <Button variant="outline" onClick={() => handleCreateNode('skill')} className="justify-start">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Skill
+                  </Button>
+                  <Button variant="outline" onClick={() => setMergeDialogOpen(true)} className="justify-start">
+                    <Merge className="mr-2 h-4 w-4" />
+                    Merge Items
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-      <BulkImportDialog open={bulkImportOpen} onOpenChange={setBulkImportOpen} onImportComplete={() => {
-      toast({
-        title: "Import Complete",
-        description: "Taxonomy data has been imported successfully."
-      });
-    }} />
+            {/* Taxonomy Tree */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Skills Taxonomy Tree</span>
+                </CardTitle>
+                <CardDescription>
+                  Organize skills into clusters, groups, and individual skills. Use drag & drop to reorder.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <TaxonomyTree 
+                  data={taxonomyData} 
+                  onEdit={handleEditNode} 
+                  onInactivate={handleInactivateNode} 
+                  onCreateChild={handleCreateNode} 
+                />
+              </CardContent>
+            </Card>
 
-      <MergeDialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen} nodes={taxonomyData} onMergeComplete={() => {
-      toast({
-        title: "Merge Complete",
-        description: "Items have been merged successfully."
-      });
-    }} />
+            {/* Dialogs */}
+            <CreateNodeDialog 
+              open={createDialogOpen} 
+              onOpenChange={setCreateDialogOpen} 
+              nodeType={selectedNodeType} 
+              existingNodes={taxonomyData} 
+              onNodeCreated={handleNodeCreated} 
+            />
 
-      <InactiveBin open={inactiveBinOpen} onOpenChange={setInactiveBinOpen} onRestore={node => {
-      toast({
-        title: "Restored",
-        description: `${node.type} "${node.name}" has been restored.`
-      });
-    }} />
-    </div>;
+            <EditNodeDialog 
+              open={editDialogOpen} 
+              onOpenChange={setEditDialogOpen} 
+              node={selectedNode} 
+              existingNodes={taxonomyData} 
+              onNodeUpdated={handleNodeUpdated} 
+            />
+
+            <BulkImportDialog 
+              open={bulkImportOpen} 
+              onOpenChange={setBulkImportOpen} 
+              onImportComplete={() => {
+                toast({
+                  title: "Import Complete",
+                  description: "Taxonomy data has been imported successfully."
+                });
+              }} 
+            />
+
+            <MergeDialog 
+              open={mergeDialogOpen} 
+              onOpenChange={setMergeDialogOpen} 
+              nodes={taxonomyData} 
+              onMergeComplete={() => {
+                toast({
+                  title: "Merge Complete",
+                  description: "Items have been merged successfully."
+                });
+              }} 
+            />
+          </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
 };
+
 export default TaxonomyManagement;
