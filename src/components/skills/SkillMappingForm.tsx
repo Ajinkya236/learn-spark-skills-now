@@ -1,62 +1,111 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useForm } from "react-hook-form";
 
-interface SkillMappingFormProps {
-  onSubmit: (data: any) => void;
-  onCancel: () => void;
+interface Skill {
+  id: string;
+  name: string;
 }
 
-export const SkillMappingForm: React.FC<SkillMappingFormProps> = ({ onSubmit, onCancel }) => {
-  const { register, handleSubmit, setValue, watch } = useForm();
-  const [selectedSkill, setSelectedSkill] = useState('');
+interface ProficiencyLevel {
+  id: string;
+  title: string;
+  description: string;
+  minScore: number;
+  maxScore: number;
+  order: number;
+}
 
-  const mockSkills = [
-    { id: '1', name: 'JavaScript Programming' },
-    { id: '2', name: 'React Development' },
-    { id: '3', name: 'Node.js Backend' },
-    { id: '4', name: 'Database Design' },
-    { id: '5', name: 'API Development' }
-  ];
+interface SkillMapping {
+  id: string;
+  skillName: string;
+  proficiencyLevelId: string;
+  minScore: number;
+  maxScore: number;
+  description: string;
+}
 
-  const proficiencyLevels = [
-    { id: '1', title: 'Beginner', minScore: 0, maxScore: 25 },
-    { id: '2', title: 'Intermediate', minScore: 26, maxScore: 50 },
-    { id: '3', title: 'Advanced', minScore: 51, maxScore: 75 },
-    { id: '4', title: 'Expert', minScore: 76, maxScore: 100 }
-  ];
+interface SkillMappingFormProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  mapping: SkillMapping | null;
+  skills: Skill[];
+  onSave: (mapping: SkillMapping) => void;
+  proficiencyLevels: ProficiencyLevel[];
+}
 
-  const handleFormSubmit = (data: any) => {
-    onSubmit({
-      ...data,
-      skillId: selectedSkill
-    });
+export const SkillMappingForm: React.FC<SkillMappingFormProps> = ({
+  open,
+  onOpenChange,
+  title,
+  mapping,
+  skills,
+  onSave,
+  proficiencyLevels
+}) => {
+  const [formData, setFormData] = useState({
+    skillName: '',
+    proficiencyLevelId: '',
+    minScore: 0,
+    maxScore: 100,
+    description: ''
+  });
+
+  useEffect(() => {
+    if (mapping) {
+      setFormData({
+        skillName: mapping.skillName,
+        proficiencyLevelId: mapping.proficiencyLevelId,
+        minScore: mapping.minScore,
+        maxScore: mapping.maxScore,
+        description: mapping.description
+      });
+    } else {
+      setFormData({
+        skillName: '',
+        proficiencyLevelId: '',
+        minScore: 0,
+        maxScore: 100,
+        description: ''
+      });
+    }
+  }, [mapping, open]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newMapping: SkillMapping = {
+      id: mapping?.id || Date.now().toString(),
+      ...formData
+    };
+    onSave(newMapping);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-inter">Add Skill Proficiency Mapping</CardTitle>
-        <CardDescription className="font-inter">
-          Map a skill to proficiency levels
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-bold text-jio-dark font-inter">{title}</DialogTitle>
+          <DialogDescription className="font-inter">
+            Configure skill proficiency mapping with score ranges
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="skill" className="font-inter">Select Skill</Label>
-            <Select value={selectedSkill} onValueChange={setSelectedSkill}>
+            <Label htmlFor="skill" className="font-inter">Skill</Label>
+            <Select value={formData.skillName} onValueChange={(value) => setFormData({ ...formData, skillName: value })}>
               <SelectTrigger>
-                <SelectValue placeholder="Choose a skill..." />
+                <SelectValue placeholder="Select a skill" />
               </SelectTrigger>
               <SelectContent>
-                {mockSkills.map((skill) => (
-                  <SelectItem key={skill.id} value={skill.id}>
+                {skills.map((skill) => (
+                  <SelectItem key={skill.id} value={skill.name}>
                     {skill.name}
                   </SelectItem>
                 ))}
@@ -66,40 +115,68 @@ export const SkillMappingForm: React.FC<SkillMappingFormProps> = ({ onSubmit, on
 
           <div className="space-y-2">
             <Label htmlFor="proficiencyLevel" className="font-inter">Proficiency Level</Label>
-            <Select onValueChange={(value) => setValue('proficiencyLevel', value)}>
+            <Select value={formData.proficiencyLevelId} onValueChange={(value) => setFormData({ ...formData, proficiencyLevelId: value })}>
               <SelectTrigger>
-                <SelectValue placeholder="Choose proficiency level..." />
+                <SelectValue placeholder="Select proficiency level" />
               </SelectTrigger>
               <SelectContent>
                 {proficiencyLevels.map((level) => (
                   <SelectItem key={level.id} value={level.id}>
-                    {level.title} ({level.minScore}-{level.maxScore})
+                    {level.title}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="minScore" className="font-inter">Min Score</Label>
+              <Input
+                id="minScore"
+                type="number"
+                value={formData.minScore}
+                onChange={(e) => setFormData({ ...formData, minScore: parseInt(e.target.value) })}
+                min="0"
+                max="100"
+                className="font-inter"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="maxScore" className="font-inter">Max Score</Label>
+              <Input
+                id="maxScore"
+                type="number"
+                value={formData.maxScore}
+                onChange={(e) => setFormData({ ...formData, maxScore: parseInt(e.target.value) })}
+                min="0"
+                max="100"
+                className="font-inter"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="description" className="font-inter">Description (Optional)</Label>
-            <Input
+            <Label htmlFor="description" className="font-inter">Description</Label>
+            <Textarea
               id="description"
-              placeholder="Add a description..."
-              {...register('description')}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe this skill-proficiency mapping..."
               className="font-inter"
             />
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onCancel} className="font-inter">
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="font-inter">
               Cancel
             </Button>
-            <Button type="submit" className="font-inter bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="font-inter bg-blue-600 hover:bg-blue-700 text-white">
               Save Mapping
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 };
