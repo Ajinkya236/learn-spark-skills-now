@@ -355,33 +355,14 @@ const TaxonomyManagement = () => {
     });
   };
 
-  const handleBulkImportComplete = (importedData: TaxonomyNode[]) => {
-    const mergeImportedData = (existing: TaxonomyNode[], imported: TaxonomyNode[]): TaxonomyNode[] => {
-      const result = [...existing];
-      
-      imported.forEach(importedNode => {
-        const existingIndex = result.findIndex(node => node.id === importedNode.id);
-        if (existingIndex >= 0) {
-          result[existingIndex] = { ...result[existingIndex], ...importedNode, updatedAt: new Date() };
-        } else {
-          result.push({ ...importedNode, createdAt: new Date(), updatedAt: new Date() });
-        }
-      });
-      
-      return result;
-    };
-
-    setTaxonomyData(mergeImportedData(taxonomyData, importedData));
-    
+  const handleBulkImportComplete = () => {
     toast({
       title: "Import Complete",
       description: "Taxonomy data has been imported successfully and is now visible in both Tree and Tabular views."
     });
   };
 
-  const handleMergeComplete = (mergedData: TaxonomyNode[]) => {
-    setTaxonomyData(mergedData);
-    
+  const handleMergeComplete = () => {
     toast({
       title: "Merge Complete",
       description: "Items have been merged successfully and changes are reflected in both Tree and Tabular views."
