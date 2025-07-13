@@ -6,31 +6,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, Upload, Download, Edit, Archive, AlertTriangle, FileText, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Upload, Download, Edit, Archive, Search, FileSpreadsheet, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import Header from "@/components/Header";
 import { BackButton } from "@/components/BackButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export interface Skill {
-  id: string;
-  name: string;
-}
-
-export interface ProficiencyLevel {
-  id: string;
-  title: string;
-}
-
-export interface ProficiencyMapping {
+interface ProficiencyMapping {
   id: string;
   skillId: string;
   skillName: string;
@@ -39,174 +29,237 @@ export interface ProficiencyMapping {
   proficiencyLevelTitle: string;
   createdAt: Date;
   updatedAt: Date;
+  isActive: boolean;
+}
+
+interface GlobalProficiencyLevel {
+  id: string;
+  title: string;
+  description: string;
+  minScore: number;
+  maxScore: number;
+  order: number;
+}
+
+interface Skill {
+  id: string;
+  name: string;
 }
 
 const ITEMS_PER_PAGE = 10;
 
 const ProficiencyLevels = () => {
-  const [skills] = useState<Skill[]>([
-    { id: '1', name: 'Python Programming' },
-    { id: '2', name: 'JavaScript' },
-    { id: '3', name: 'React' }
-  ]);
-
-  const [proficiencyLevels] = useState<ProficiencyLevel[]>([
-    { id: '1', title: 'Beginner' },
-    { id: '2', title: 'Intermediate' },
-    { id: '3', title: 'Advanced' }
-  ]);
-
-  const [createProficiencyOpen, setCreateProficiencyOpen] = useState(false);
-  const [editProficiencyOpen, setEditProficiencyOpen] = useState(false);
-  const [selectedProficiency, setSelectedProficiency] = useState<ProficiencyMapping | null>(null);
-  
-  const handleEditProficiency = (mapping: ProficiencyMapping) => {
-    setSelectedProficiency(mapping);
-    setEditProficiencyOpen(true);
-  };
-
-  const handleInactivateProficiency = (mapping: ProficiencyMapping) => {
-    toast({
-      title: "Proficiency Inactivated",
-      description: `Proficiency "${mapping.proficiencyDescription}" has been moved to the Inactive Bin.`
-    });
-  };
-  
+  const [activeTab, setActiveTab] = useState('mappings');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [createMappingOpen, setCreateMappingOpen] = useState(false);
+  const [editMappingOpen, setEditMappingOpen] = useState(false);
+  const [editLevelOpen, setEditLevelOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [selectedMapping, setSelectedMapping] = useState<ProficiencyMapping | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<GlobalProficiencyLevel | null>(null);
   const { toast } = useToast();
-  
+
+  // Mock data for proficiency mappings
   const [proficiencyMappings, setProficiencyMappings] = useState<ProficiencyMapping[]>([
     {
       id: '1',
       skillId: '1',
       skillName: 'Python Programming',
-      proficiencyDescription: 'Basic syntax understanding and simple script writing',
+      proficiencyDescription: 'Basic Python syntax and fundamental concepts',
       proficiencyLevelId: '1',
       proficiencyLevelTitle: 'Beginner',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date('2024-01-15'),
+      updatedAt: new Date('2024-01-15'),
+      isActive: true
     },
     {
       id: '2',
       skillId: '1',
       skillName: 'Python Programming',
-      proficiencyDescription: 'Advanced concepts, frameworks, and complex applications',
+      proficiencyDescription: 'Advanced Python with frameworks and libraries',
       proficiencyLevelId: '2',
       proficiencyLevelTitle: 'Intermediate',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date('2024-01-16'),
+      updatedAt: new Date('2024-01-16'),
+      isActive: true
     }
   ]);
 
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importErrors, setImportErrors] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  // Mock data for global proficiency levels
+  const [globalLevels, setGlobalLevels] = useState<GlobalProficiencyLevel[]>([
+    {
+      id: '1',
+      title: 'Beginner',
+      description: 'Basic understanding and limited practical experience',
+      minScore: 0,
+      maxScore: 25,
+      order: 1
+    },
+    {
+      id: '2',
+      title: 'Intermediate',
+      description: 'Good understanding with moderate practical experience',
+      minScore: 26,
+      maxScore: 75,
+      order: 2
+    },
+    {
+      id: '3',
+      title: 'Expert',
+      description: 'Deep expertise with extensive practical experience',
+      minScore: 76,
+      maxScore: 100,
+      order: 3
+    }
+  ]);
 
-  const handleImportProficiencies = () => {
-    if (!importFile) {
-      toast({
-        title: "Error",
-        description: "Please select a file to import.",
-        variant: "destructive"
-      });
-      return;
+  // Mock skills data
+  const mockSkills: Skill[] = [
+    { id: '1', name: 'Python Programming' },
+    { id: '2', name: 'JavaScript Development' },
+    { id: '3', name: 'Data Analysis' }
+  ];
+
+  const getFilteredMappings = () => {
+    let filtered = proficiencyMappings.filter(mapping => mapping.isActive);
+
+    if (searchTerm) {
+      filtered = filtered.filter(mapping => 
+        mapping.skillName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        mapping.proficiencyDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        mapping.proficiencyLevelTitle.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
 
-    // Simulate file processing with validation
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        // Simulate parsing and validation
-        const errors: string[] = [];
-        
-        // Mock validation rules
-        const mockData = [
-          { skill: 'Python Programming', proficiency: 'Basic syntax', level: 'Beginner' },
-          { skill: 'Python Programming', proficiency: 'Basic syntax', level: 'Beginner' }, // Duplicate
-          { skill: '', proficiency: 'Advanced concepts', level: 'Expert' }, // Missing skill
-          { skill: 'JavaScript', proficiency: 'DOM Manipulation', level: 'NonExistentLevel' } // Invalid level
-        ];
-
-        mockData.forEach((row, index) => {
-          const rowNum = index + 2; // Account for header row
-          
-          // Check for required fields
-          if (!row.skill) {
-            errors.push(`Row ${rowNum}: Skill name is required`);
-          }
-          if (!row.proficiency) {
-            errors.push(`Row ${rowNum}: Proficiency description is required`);
-          }
-          if (!row.level) {
-            errors.push(`Row ${rowNum}: Proficiency level is required`);
-          }
-
-          // Check for duplicates
-          if (row.skill === 'Python Programming' && row.proficiency === 'Basic syntax') {
-            const existing = proficiencyMappings.find(p => 
-              p.skillName === row.skill && p.proficiencyDescription === row.proficiency
-            );
-            if (existing) {
-              errors.push(`Row ${rowNum}: Duplicate proficiency "${row.proficiency}" for skill "${row.skill}"`);
-            }
-          }
-
-          // Check for valid proficiency level
-          if (row.level === 'NonExistentLevel') {
-            errors.push(`Row ${rowNum}: Invalid proficiency level "${row.level}". Must be one of: Conversant, Beginner, Intermediate, Advanced`);
-          }
-        });
-
-        if (errors.length > 0) {
-          setImportErrors(errors);
-          toast({
-            title: "Import Failed",
-            description: `Found ${errors.length} error(s). Please fix them and try again.`,
-            variant: "destructive"
-          });
-        } else {
-          // Simulate successful import
-          toast({
-            title: "Import Successful",
-            description: "Proficiency mappings have been imported successfully."
-          });
-          setImportDialogOpen(false);
-          setImportFile(null);
-          setImportErrors([]);
-        }
-      } catch (error) {
-        toast({
-          title: "Import Failed",
-          description: "Failed to process the file. Please check the format and try again.",
-          variant: "destructive"
-        });
-      }
-    };
-    reader.readAsText(importFile);
+    return filtered;
   };
 
-  const downloadImportTemplate = () => {
-    const csvContent = "Skill,Proficiency Description,Proficiency Level\n" +
-                      "Python Programming,Basic syntax understanding,Beginner\n" +
-                      "JavaScript,DOM manipulation and events,Intermediate\n" +
-                      "React,Component development and state management,Advanced";
+  const filteredMappings = getFilteredMappings();
+  const totalPages = Math.ceil(filteredMappings.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedMappings = filteredMappings.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handleInactivateProficiency = (mapping: ProficiencyMapping) => {
+    setProficiencyMappings(prev => 
+      prev.map(m => 
+        m.id === mapping.id 
+          ? { ...m, isActive: false, updatedAt: new Date() }
+          : m
+      )
+    );
     
+    toast({
+      title: "Proficiency Inactivated",
+      description: `Proficiency "${mapping.proficiencyDescription}" has been moved to the Inactive Bin and removed from the Skill Proficiency Mappings.`
+    });
+  };
+
+  const handleEditMapping = (mapping: ProficiencyMapping) => {
+    setSelectedMapping(mapping);
+    setEditMappingOpen(true);
+  };
+
+  const handleEditLevel = (level: GlobalProficiencyLevel) => {
+    setSelectedLevel(level);
+    setEditLevelOpen(true);
+  };
+
+  const handleMappingUpdated = (updatedMapping: ProficiencyMapping) => {
+    setProficiencyMappings(prev => 
+      prev.map(m => 
+        m.id === updatedMapping.id 
+          ? { ...updatedMapping, updatedAt: new Date() }
+          : m
+      )
+    );
+    
+    toast({
+      title: "Success",
+      description: "Proficiency mapping updated successfully and reflected in the master data."
+    });
+    setEditMappingOpen(false);
+  };
+
+  const handleLevelUpdated = (updatedLevel: GlobalProficiencyLevel) => {
+    setGlobalLevels(prev => 
+      prev.map(level => 
+        level.id === updatedLevel.id 
+          ? updatedLevel
+          : level
+      )
+    );
+    
+    // Update mappings that reference this level
+    setProficiencyMappings(prev => 
+      prev.map(mapping => 
+        mapping.proficiencyLevelId === updatedLevel.id
+          ? { ...mapping, proficiencyLevelTitle: updatedLevel.title, updatedAt: new Date() }
+          : mapping
+      )
+    );
+    
+    toast({
+      title: "Success", 
+      description: "Global proficiency level updated successfully and reflected in all related mappings."
+    });
+    setEditLevelOpen(false);
+  };
+
+  const handleMappingCreated = (newMapping: Partial<ProficiencyMapping>) => {
+    const mapping: ProficiencyMapping = {
+      id: Date.now().toString(),
+      skillId: newMapping.skillId!,
+      skillName: mockSkills.find(s => s.id === newMapping.skillId)?.name || '',
+      proficiencyDescription: newMapping.proficiencyDescription!,
+      proficiencyLevelId: newMapping.proficiencyLevelId!,
+      proficiencyLevelTitle: globalLevels.find(l => l.id === newMapping.proficiencyLevelId)?.title || '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: true
+    };
+
+    setProficiencyMappings(prev => [...prev, mapping]);
+    
+    toast({
+      title: "Success",
+      description: "Proficiency mapping created successfully and is now reflected in the Skill Proficiency Mappings master."
+    });
+    setCreateMappingOpen(false);
+  };
+
+  const downloadTemplate = () => {
+    const headers = ['Skill Name', 'Proficiency Description', 'Proficiency Level'];
+    const sampleData = [
+      ['Python Programming', 'Basic syntax and fundamentals', 'Beginner'],
+      ['JavaScript Development', 'Advanced frameworks and libraries', 'Intermediate']
+    ];
+
+    const csvContent = [headers, ...sampleData]
+      .map(row => row.join(','))
+      .join('\n');
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'proficiency_import_template.csv';
+    a.download = 'proficiency_mappings_template.csv';
     a.click();
-    window.URL.revokeObjectURL(url);
     window.URL.revokeObjectURL(url);
   };
 
   const exportMappings = () => {
-    const csvContent = "Skill,Proficiency Description,Proficiency Level\n" +
-      proficiencyMappings.map(mapping => 
-        `"${mapping.skillName}","${mapping.proficiencyDescription}","${mapping.proficiencyLevelTitle}"`
-      ).join('\n');
-    
+    const headers = ['Skill Name', 'Proficiency Description', 'Proficiency Level'];
+    const data = filteredMappings.map(mapping => [
+      mapping.skillName,
+      mapping.proficiencyDescription,
+      mapping.proficiencyLevelTitle
+    ]);
+
+    const csvContent = [headers, ...data]
+      .map(row => row.join(','))
+      .join('\n');
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -215,31 +268,6 @@ const ProficiencyLevels = () => {
     a.click();
     window.URL.revokeObjectURL(url);
   };
-
-  const handleCreateProficiency = (proficiencyData: Partial<ProficiencyMapping>) => {
-    const newMapping: ProficiencyMapping = {
-      id: Date.now().toString(),
-      skillId: proficiencyData.skillId || '',
-      skillName: proficiencyData.skillName || '',
-      proficiencyDescription: proficiencyData.proficiencyDescription || '',
-      proficiencyLevelId: proficiencyData.proficiencyLevelId || '',
-      proficiencyLevelTitle: proficiencyData.proficiencyLevelTitle || '',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    setProficiencyMappings([...proficiencyMappings, newMapping]);
-    
-    toast({
-      title: "Success",
-      description: "Proficiency mapping created successfully and reflected in master data."
-    });
-  };
-
-  // Pagination for skill proficiency mappings
-  const totalPages = Math.ceil(proficiencyMappings.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedMappings = proficiencyMappings.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <SidebarProvider>
@@ -252,145 +280,208 @@ const ProficiencyLevels = () => {
             <div className="flex items-center gap-4">
               <BackButton />
               <div className="flex-1">
-                <h1 className="text-2xl md:text-3xl font-black text-jio-dark font-inter">Skills Proficiency Management</h1>
-                <p className="text-muted-foreground font-inter">Manage global proficiency levels and skill mappings</p>
+                <h1 className="text-2xl md:text-3xl font-black text-jio-dark font-inter">Skill Proficiency</h1>
+                <p className="text-muted-foreground font-inter">Manage skill proficiency mappings and global levels</p>
               </div>
             </div>
 
             {/* Sub-menu Tabs */}
-            <Tabs defaultValue="mappings" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="mappings" className="font-inter">Skill Proficiency Mappings</TabsTrigger>
                 <TabsTrigger value="levels" className="font-inter">Global Proficiency Levels</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="mappings">
-                <div className="space-y-6">
-                  {/* Action Buttons */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg font-bold text-jio-dark font-inter">Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-3">
-                        <Button onClick={() => setCreateProficiencyOpen(true)} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create Proficiency
-                        </Button>
-                        <Button variant="outline" onClick={() => setImportDialogOpen(true)} className="font-inter">
-                          <Upload className="mr-2 h-4 w-4" />
-                          Import Proficiencies
-                        </Button>
-                        <Button variant="outline" onClick={exportMappings} className="font-inter">
-                          <Download className="mr-2 h-4 w-4" />
-                          Export Mappings
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+              {/* Skill Proficiency Mappings Tab */}
+              <TabsContent value="mappings" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-bold text-jio-dark font-inter">Actions</CardTitle>
+                    <CardDescription className="font-inter">
+                      Manage proficiency mappings with import/export capabilities
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={() => setCreateMappingOpen(true)} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Proficiency
+                      </Button>
+                      <Button variant="outline" onClick={() => setImportDialogOpen(true)} className="font-inter">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Import Proficiencies
+                      </Button>
+                      <Button variant="outline" onClick={exportMappings} className="font-inter">
+                        <Download className="mr-2 h-4 w-4" />
+                        Export Mappings
+                      </Button>
+                      <Button variant="outline" onClick={downloadTemplate} className="font-inter">
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        Download Template
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Proficiency Mappings Table */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="font-bold text-jio-dark font-inter">Skill Proficiency Mappings</CardTitle>
-                      <CardDescription className="font-inter">
-                        Manage proficiency descriptions mapped to skills and levels
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="border rounded-lg">
-                        <Table>
-                          <TableHeader>
+                {/* Search */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-bold text-jio-dark font-inter">Search & Filter</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input
+                        placeholder="Search mappings..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 font-inter"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Proficiency Mappings Table */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-bold text-jio-dark font-inter">
+                      Skill Proficiency Mappings ({filteredMappings.length})
+                    </CardTitle>
+                    <CardDescription className="font-inter">
+                      View and manage all skill proficiency mappings
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="font-inter">Skill</TableHead>
+                            <TableHead className="font-inter">Proficiency Description</TableHead>
+                            <TableHead className="font-inter">Proficiency Level</TableHead>
+                            <TableHead className="font-inter">Created</TableHead>
+                            <TableHead className="font-inter">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedMappings.length === 0 ? (
                             <TableRow>
-                              <TableHead className="font-inter">Skill</TableHead>
-                              <TableHead className="font-inter">Proficiency Description</TableHead>
-                              <TableHead className="font-inter">Proficiency Level</TableHead>
-                              <TableHead className="font-inter">Actions</TableHead>
+                              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground font-inter">
+                                No proficiency mappings found
+                              </TableCell>
                             </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {paginatedMappings.map((mapping) => (
+                          ) : (
+                            paginatedMappings.map((mapping) => (
                               <TableRow key={mapping.id}>
                                 <TableCell className="font-medium font-inter">{mapping.skillName}</TableCell>
                                 <TableCell className="font-inter">{mapping.proficiencyDescription}</TableCell>
                                 <TableCell>
-                                  <Badge className="font-inter">{mapping.proficiencyLevelTitle}</Badge>
+                                  <Badge variant="outline" className="font-inter">
+                                    {mapping.proficiencyLevelTitle}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="font-inter">
+                                  {mapping.createdAt.toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => handleEditProficiency(mapping)}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditMapping(mapping)}
+                                      className="font-inter"
+                                    >
                                       <Edit className="h-4 w-4" />
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="text-orange-600" onClick={() => handleInactivateProficiency(mapping)}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleInactivateProficiency(mapping)}
+                                      className="text-orange-600 hover:text-orange-600 font-inter"
+                                    >
                                       <Archive className="h-4 w-4" />
                                     </Button>
                                   </div>
                                 </TableCell>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
 
-                      {/* Pagination */}
-                      {totalPages > 1 && (
-                        <div className="flex justify-center mt-4 pb-4">
-                          <Pagination>
-                            <PaginationContent>
-                              <PaginationItem>
-                                <PaginationPrevious 
-                                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                                />
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center mt-4 pb-4">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious 
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
                               </PaginationItem>
-                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                <PaginationItem key={page}>
-                                  <PaginationLink
-                                    onClick={() => setCurrentPage(page)}
-                                    isActive={currentPage === page}
-                                    className="cursor-pointer"
-                                  >
-                                    {page}
-                                  </PaginationLink>
-                                </PaginationItem>
-                              ))}
-                              <PaginationItem>
-                                <PaginationNext 
-                                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                                />
-                              </PaginationItem>
-                            </PaginationContent>
-                          </Pagination>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+                            ))}
+                            <PaginationItem>
+                              <PaginationNext 
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
-              <TabsContent value="levels">
+              {/* Global Proficiency Levels Tab */}
+              <TabsContent value="levels" className="space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle className="font-bold text-jio-dark font-inter">Global Proficiency Levels</CardTitle>
                     <CardDescription className="font-inter">
-                      Manage the list of global proficiency levels
+                      Manage global proficiency level definitions used across all skills
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-0">
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="font-inter">Order</TableHead>
                           <TableHead className="font-inter">Title</TableHead>
+                          <TableHead className="font-inter">Description</TableHead>
+                          <TableHead className="font-inter">Score Range</TableHead>
                           <TableHead className="font-inter">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {proficiencyLevels.map((level) => (
+                        {globalLevels.map((level) => (
                           <TableRow key={level.id}>
+                            <TableCell className="font-inter">{level.order}</TableCell>
                             <TableCell className="font-medium font-inter">{level.title}</TableCell>
+                            <TableCell className="font-inter">{level.description}</TableCell>
+                            <TableCell className="font-inter">
+                              {level.minScore} - {level.maxScore}
+                            </TableCell>
                             <TableCell>
-                              <Button variant="ghost" size="sm">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditLevel(level)}
+                                className="font-inter"
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </TableCell>
@@ -403,119 +494,45 @@ const ProficiencyLevels = () => {
               </TabsContent>
             </Tabs>
 
-            {/* Import Dialog */}
-            <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle className="font-inter font-bold text-jio-dark">Import Proficiency Mappings</DialogTitle>
-                  <DialogDescription className="font-inter">
-                    Upload an Excel/CSV file with proficiency mappings. Download the template for the correct format.
-                  </DialogDescription>
-                </DialogHeader>
+            {/* Dialogs */}
+            <CreateProficiencyDialog 
+              open={createMappingOpen}
+              onOpenChange={setCreateMappingOpen}
+              skills={mockSkills}
+              proficiencyLevels={globalLevels}
+              onProficiencyCreated={handleMappingCreated}
+            />
 
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Button variant="outline" onClick={downloadImportTemplate} className="font-inter">
-                      <FileText className="mr-2 h-4 w-4" />
-                      Download Template
-                    </Button>
-                  </div>
+            <EditProficiencyDialog 
+              open={editMappingOpen}
+              onOpenChange={setEditMappingOpen}
+              mapping={selectedMapping}
+              skills={mockSkills}
+              proficiencyLevels={globalLevels}
+              onProficiencyUpdated={handleMappingUpdated}
+            />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="import-file" className="font-inter font-medium">Select File</Label>
-                    <Input
-                      id="import-file"
-                      type="file"
-                      accept=".csv,.xlsx,.xls"
-                      onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                      className="font-inter"
-                    />
-                  </div>
+            <EditLevelDialog 
+              open={editLevelOpen}
+              onOpenChange={setEditLevelOpen}
+              level={selectedLevel}
+              onLevelUpdated={handleLevelUpdated}
+            />
 
-                  {importErrors.length > 0 && (
-                    <Alert variant="destructive">
-                      <XCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        <div className="space-y-2">
-                          <p className="font-medium font-inter">Import Errors:</p>
-                          <ul className="list-disc list-inside space-y-1 text-sm font-inter">
-                            {importErrors.map((error, index) => (
-                              <li key={index}>{error}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription className="font-inter">
-                      <div className="space-y-2">
-                        <p className="font-medium">Import Rules:</p>
-                        <ul className="list-disc list-inside space-y-1 text-sm">
-                          <li>Each proficiency must map to exactly one skill</li>
-                          <li>Each proficiency must map to exactly one proficiency level</li>
-                          <li>Cannot create duplicate proficiency descriptions under the same skill</li>
-                          <li>New entries will be added, existing ones will be updated</li>
-                          <li>No deletions allowed via import</li>
-                        </ul>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                </div>
-
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setImportDialogOpen(false)} className="font-inter">
-                    Cancel
-                  </Button>
-                  <Button onClick={handleImportProficiencies} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
-                    Import Proficiencies
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            {/* Create Proficiency Dialog */}
-            <Dialog open={createProficiencyOpen} onOpenChange={setCreateProficiencyOpen}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle className="font-inter font-bold text-jio-dark">Create New Proficiency Mapping</DialogTitle>
-                  <DialogDescription className="font-inter">
-                    Map a skill to a proficiency description and level
-                  </DialogDescription>
-                </DialogHeader>
-
-                {/* Create Proficiency Form */}
-                <CreateProficiencyForm 
-                  skills={skills}
-                  proficiencyLevels={proficiencyLevels}
-                  onCreate={handleCreateProficiency}
-                  onCancel={() => setCreateProficiencyOpen(false)}
-                />
-              </DialogContent>
-            </Dialog>
-
-            {/* Edit Proficiency Dialog */}
-            <Dialog open={editProficiencyOpen} onOpenChange={setEditProficiencyOpen}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle className="font-inter font-bold text-jio-dark">Edit Proficiency Mapping</DialogTitle>
-                  <DialogDescription className="font-inter">
-                    Modify the proficiency description and level for a skill
-                  </DialogDescription>
-                </DialogHeader>
-
-                {/* Edit Proficiency Form */}
-                <EditProficiencyForm 
-                  skills={skills}
-                  proficiencyLevels={proficiencyLevels}
-                  existingMapping={selectedProficiency}
-                  onUpdate={() => {}}
-                  onCancel={() => setEditProficiencyOpen(false)}
-                />
-              </DialogContent>
-            </Dialog>
+            <ImportProficienciesDialog 
+              open={importDialogOpen}
+              onOpenChange={setImportDialogOpen}
+              skills={mockSkills}
+              proficiencyLevels={globalLevels}
+              existingMappings={proficiencyMappings}
+              onImportComplete={(imported) => {
+                setProficiencyMappings(prev => [...prev, ...imported]);
+                toast({
+                  title: "Import Complete",
+                  description: `${imported.length} proficiency mappings imported successfully and reflected in the master data.`
+                });
+              }}
+            />
           </div>
         </SidebarInset>
       </div>
@@ -523,14 +540,14 @@ const ProficiencyLevels = () => {
   );
 };
 
-interface CreateProficiencyFormProps {
+// Create Proficiency Dialog Component
+const CreateProficiencyDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   skills: Skill[];
-  proficiencyLevels: ProficiencyLevel[];
-  onCreate: (data: Partial<ProficiencyMapping>) => void;
-  onCancel: () => void;
-}
-
-const CreateProficiencyForm: React.FC<CreateProficiencyFormProps> = ({ skills, proficiencyLevels, onCreate, onCancel }) => {
+  proficiencyLevels: GlobalProficiencyLevel[];
+  onProficiencyCreated: (mapping: Partial<ProficiencyMapping>) => void;
+}> = ({ open, onOpenChange, skills, proficiencyLevels, onProficiencyCreated }) => {
   const [skillId, setSkillId] = useState('');
   const [proficiencyDescription, setProficiencyDescription] = useState('');
   const [proficiencyLevelId, setProficiencyLevelId] = useState('');
@@ -539,203 +556,469 @@ const CreateProficiencyForm: React.FC<CreateProficiencyFormProps> = ({ skills, p
   const handleSubmit = () => {
     if (!skillId || !proficiencyDescription || !proficiencyLevelId) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields.",
+        title: "Validation Error",
+        description: "All fields are mandatory. Please fill in all required fields.",
         variant: "destructive"
       });
       return;
     }
 
-    const selectedSkill = skills.find(skill => skill.id === skillId);
-    const selectedLevel = proficiencyLevels.find(level => level.id === proficiencyLevelId);
-
-    if (!selectedSkill || !selectedLevel) {
-      toast({
-        title: "Error",
-        description: "Invalid skill or proficiency level selected.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    onCreate({
+    onProficiencyCreated({
       skillId,
-      skillName: selectedSkill.name,
       proficiencyDescription,
-      proficiencyLevelId,
-      proficiencyLevelTitle: selectedLevel.title
+      proficiencyLevelId
     });
 
-    onCancel();
+    // Reset form
+    setSkillId('');
+    setProficiencyDescription('');
+    setProficiencyLevelId('');
   };
 
   return (
-    <div className="grid gap-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="skill" className="font-inter font-medium">Skill</Label>
-        <Select value={skillId} onValueChange={setSkillId}>
-          <SelectTrigger className="font-inter">
-            <SelectValue placeholder="Select a skill" />
-          </SelectTrigger>
-          <SelectContent>
-            {skills.map((skill) => (
-              <SelectItem key={skill.id} value={skill.id} className="font-inter">
-                {skill.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-inter font-bold text-jio-dark">Create Proficiency Mapping</DialogTitle>
+          <DialogDescription className="font-inter">
+            Create a new proficiency mapping for a skill
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="space-y-2">
-        <Label htmlFor="proficiency-description" className="font-inter font-medium">Proficiency Description</Label>
-        <Textarea
-          id="proficiency-description"
-          placeholder="Enter proficiency description"
-          value={proficiencyDescription}
-          onChange={(e) => setProficiencyDescription(e.target.value)}
-          className="font-inter"
-        />
-      </div>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="skill" className="font-inter font-medium">Skill *</Label>
+            <Select value={skillId} onValueChange={setSkillId}>
+              <SelectTrigger className="font-inter">
+                <SelectValue placeholder="Select skill" />
+              </SelectTrigger>
+              <SelectContent>
+                {skills.map(skill => (
+                  <SelectItem key={skill.id} value={skill.id} className="font-inter">
+                    {skill.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="proficiency-level" className="font-inter font-medium">Proficiency Level</Label>
-        <Select value={proficiencyLevelId} onValueChange={setProficiencyLevelId}>
-          <SelectTrigger className="font-inter">
-            <SelectValue placeholder="Select a proficiency level" />
-          </SelectTrigger>
-          <SelectContent>
-            {proficiencyLevels.map((level) => (
-              <SelectItem key={level.id} value={level.id} className="font-inter">
-                {level.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="description" className="font-inter font-medium">Proficiency Description *</Label>
+            <Textarea 
+              id="description" 
+              value={proficiencyDescription} 
+              onChange={e => setProficiencyDescription(e.target.value)} 
+              placeholder="Describe this proficiency level for the skill"
+              className="font-inter"
+            />
+          </div>
 
-      <DialogFooter>
-        <Button variant="outline" onClick={onCancel} className="font-inter">
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
-          Create Proficiency
-        </Button>
-      </DialogFooter>
-    </div>
+          <div className="space-y-2">
+            <Label htmlFor="level" className="font-inter font-medium">Proficiency Level *</Label>
+            <Select value={proficiencyLevelId} onValueChange={setProficiencyLevelId}>
+              <SelectTrigger className="font-inter">
+                <SelectValue placeholder="Select proficiency level" />
+              </SelectTrigger>
+              <SelectContent>
+                {proficiencyLevels.map(level => (
+                  <SelectItem key={level.id} value={level.id} className="font-inter">
+                    {level.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-inter">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
+            Create Proficiency
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-interface EditProficiencyFormProps {
+// Edit Proficiency Dialog Component
+const EditProficiencyDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mapping: ProficiencyMapping | null;
   skills: Skill[];
-  proficiencyLevels: ProficiencyLevel[];
-  existingMapping: ProficiencyMapping | null;
-  onUpdate: (data: Partial<ProficiencyMapping>) => void;
-  onCancel: () => void;
-}
-
-const EditProficiencyForm: React.FC<EditProficiencyFormProps> = ({ skills, proficiencyLevels, existingMapping, onUpdate, onCancel }) => {
-  const [skillId, setSkillId] = useState(existingMapping?.skillId || '');
-  const [proficiencyDescription, setProficiencyDescription] = useState(existingMapping?.proficiencyDescription || '');
-  const [proficiencyLevelId, setProficiencyLevelId] = useState(existingMapping?.proficiencyLevelId || '');
+  proficiencyLevels: GlobalProficiencyLevel[];
+  onProficiencyUpdated: (mapping: ProficiencyMapping) => void;
+}> = ({ open, onOpenChange, mapping, skills, proficiencyLevels, onProficiencyUpdated }) => {
+  const [skillId, setSkillId] = useState(mapping?.skillId || '');
+  const [proficiencyDescription, setProficiencyDescription] = useState(mapping?.proficiencyDescription || '');
+  const [proficiencyLevelId, setProficiencyLevelId] = useState(mapping?.proficiencyLevelId || '');
   const { toast } = useToast();
 
   React.useEffect(() => {
-    if (existingMapping) {
-      setSkillId(existingMapping.skillId);
-      setProficiencyDescription(existingMapping.proficiencyDescription);
-      setProficiencyLevelId(existingMapping.proficiencyLevelId);
+    if (mapping) {
+      setSkillId(mapping.skillId);
+      setProficiencyDescription(mapping.proficiencyDescription);
+      setProficiencyLevelId(mapping.proficiencyLevelId);
     }
-  }, [existingMapping]);
+  }, [mapping]);
 
   const handleSubmit = () => {
-    if (!skillId || !proficiencyDescription || !proficiencyLevelId) {
+    if (!skillId || !proficiencyDescription || !proficiencyLevelId || !mapping) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields.",
+        title: "Validation Error",
+        description: "All fields are mandatory. Please fill in all required fields.",
         variant: "destructive"
       });
       return;
     }
 
-    const selectedSkill = skills.find(skill => skill.id === skillId);
-    const selectedLevel = proficiencyLevels.find(level => level.id === proficiencyLevelId);
-
-    if (!selectedSkill || !selectedLevel) {
-      toast({
-        title: "Error",
-        description: "Invalid skill or proficiency level selected.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    onUpdate({
-      id: existingMapping?.id,
+    const updatedMapping: ProficiencyMapping = {
+      ...mapping,
       skillId,
-      skillName: selectedSkill.name,
+      skillName: skills.find(s => s.id === skillId)?.name || '',
       proficiencyDescription,
       proficiencyLevelId,
-      proficiencyLevelTitle: selectedLevel.title
-    });
+      proficiencyLevelTitle: proficiencyLevels.find(l => l.id === proficiencyLevelId)?.title || ''
+    };
 
-    onCancel();
+    onProficiencyUpdated(updatedMapping);
   };
 
   return (
-    <div className="grid gap-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="skill" className="font-inter font-medium">Skill</Label>
-        <Select value={skillId} onValueChange={setSkillId}>
-          <SelectTrigger className="font-inter">
-            <SelectValue placeholder="Select a skill" />
-          </SelectTrigger>
-          <SelectContent>
-            {skills.map((skill) => (
-              <SelectItem key={skill.id} value={skill.id} className="font-inter">
-                {skill.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-inter font-bold text-jio-dark">Edit Proficiency Mapping</DialogTitle>
+          <DialogDescription className="font-inter">
+            Update the proficiency mapping details
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="space-y-2">
-        <Label htmlFor="proficiency-description" className="font-inter font-medium">Proficiency Description</Label>
-        <Textarea
-          id="proficiency-description"
-          placeholder="Enter proficiency description"
-          value={proficiencyDescription}
-          onChange={(e) => setProficiencyDescription(e.target.value)}
-          className="font-inter"
-        />
-      </div>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="skill" className="font-inter font-medium">Skill *</Label>
+            <Select value={skillId} onValueChange={setSkillId}>
+              <SelectTrigger className="font-inter">
+                <SelectValue placeholder="Select skill" />
+              </SelectTrigger>
+              <SelectContent>
+                {skills.map(skill => (
+                  <SelectItem key={skill.id} value={skill.id} className="font-inter">
+                    {skill.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="proficiency-level" className="font-inter font-medium">Proficiency Level</Label>
-        <Select value={proficiencyLevelId} onValueChange={setProficiencyLevelId}>
-          <SelectTrigger className="font-inter">
-            <SelectValue placeholder="Select a proficiency level" />
-          </SelectTrigger>
-          <SelectContent>
-            {proficiencyLevels.map((level) => (
-              <SelectItem key={level.id} value={level.id} className="font-inter">
-                {level.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="description" className="font-inter font-medium">Proficiency Description *</Label>
+            <Textarea 
+              id="description" 
+              value={proficiencyDescription} 
+              onChange={e => setProficiencyDescription(e.target.value)} 
+              placeholder="Describe this proficiency level for the skill"
+              className="font-inter"
+            />
+          </div>
 
-      <DialogFooter>
-        <Button variant="outline" onClick={onCancel} className="font-inter">
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
-          Update Proficiency
-        </Button>
-      </DialogFooter>
-    </div>
+          <div className="space-y-2">
+            <Label htmlFor="level" className="font-inter font-medium">Proficiency Level *</Label>
+            <Select value={proficiencyLevelId} onValueChange={setProficiencyLevelId}>
+              <SelectTrigger className="font-inter">
+                <SelectValue placeholder="Select proficiency level" />
+              </SelectTrigger>
+              <SelectContent>
+                {proficiencyLevels.map(level => (
+                  <SelectItem key={level.id} value={level.id} className="font-inter">
+                    {level.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-inter">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
+            Update Proficiency
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Edit Level Dialog Component
+const EditLevelDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  level: GlobalProficiencyLevel | null;
+  onLevelUpdated: (level: GlobalProficiencyLevel) => void;
+}> = ({ open, onOpenChange, level, onLevelUpdated }) => {
+  const [title, setTitle] = useState(level?.title || '');
+  const [description, setDescription] = useState(level?.description || '');
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (level) {
+      setTitle(level.title);
+      setDescription(level.description);
+    }
+  }, [level]);
+
+  const handleSubmit = () => {
+    if (!title.trim() || !description.trim() || !level) {
+      toast({
+        title: "Validation Error",
+        description: "Title and description are required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const updatedLevel: GlobalProficiencyLevel = {
+      ...level,
+      title: title.trim(),
+      description: description.trim()
+    };
+
+    onLevelUpdated(updatedLevel);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-inter font-bold text-jio-dark">Edit Global Proficiency Level</DialogTitle>
+          <DialogDescription className="font-inter">
+            Update the title and description of this proficiency level
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="title" className="font-inter font-medium">Title *</Label>
+            <Input 
+              id="title" 
+              value={title} 
+              onChange={e => setTitle(e.target.value)} 
+              placeholder="Enter level title"
+              className="font-inter"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description" className="font-inter font-medium">Description *</Label>
+            <Textarea 
+              id="description" 
+              value={description} 
+              onChange={e => setDescription(e.target.value)} 
+              placeholder="Describe this proficiency level"
+              className="font-inter"
+            />
+          </div>
+
+          {level && (
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <p className="text-sm text-muted-foreground font-inter">
+                Score Range: {level.minScore} - {level.maxScore} (cannot be edited)
+              </p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-inter">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
+            Update Level
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Import Proficiencies Dialog Component
+const ImportProficienciesDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  skills: Skill[];
+  proficiencyLevels: GlobalProficiencyLevel[];
+  existingMappings: ProficiencyMapping[];
+  onImportComplete: (imported: ProficiencyMapping[]) => void;
+}> = ({ open, onOpenChange, skills, proficiencyLevels, existingMappings, onImportComplete }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const validateAndImport = () => {
+    if (!file) {
+      toast({
+        title: "No File Selected",
+        description: "Please select a CSV file to import.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csv = e.target?.result as string;
+        const lines = csv.split('\n').filter(line => line.trim());
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        if (headers.length !== 3 || !headers.includes('Skill Name') || !headers.includes('Proficiency Description') || !headers.includes('Proficiency Level')) {
+          setErrors(['Invalid CSV format. Expected columns: Skill Name, Proficiency Description, Proficiency Level']);
+          return;
+        }
+
+        const importErrors: string[] = [];
+        const validMappings: ProficiencyMapping[] = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          const [skillName, proficiencyDescription, proficiencyLevel] = lines[i].split(',').map(cell => cell.trim());
+          
+          if (!skillName || !proficiencyDescription || !proficiencyLevel) {
+            importErrors.push(`Row ${i + 1}: All fields are required`);
+            continue;
+          }
+
+          const skill = skills.find(s => s.name.toLowerCase() === skillName.toLowerCase());
+          if (!skill) {
+            importErrors.push(`Row ${i + 1}: Skill "${skillName}" not found`);
+            continue;
+          }
+
+          const level = proficiencyLevels.find(l => l.title.toLowerCase() === proficiencyLevel.toLowerCase());
+          if (!level) {
+            importErrors.push(`Row ${i + 1}: Proficiency level "${proficiencyLevel}" not found`);
+            continue;
+          }
+
+          // Check for duplicate proficiency description under same skill 
+          const duplicateInExisting = existingMappings.find(m => 
+            m.skillId === skill.id && 
+            m.proficiencyDescription.toLowerCase() === proficiencyDescription.toLowerCase() &&
+            m.isActive
+          );
+          
+          const duplicateInImport = validMappings.find(m => 
+            m.skillId === skill.id && 
+            m.proficiencyDescription.toLowerCase() === proficiencyDescription.toLowerCase()
+          );
+
+          if (duplicateInExisting || duplicateInImport) {
+            importErrors.push(`Row ${i + 1}: Duplicate proficiency description "${proficiencyDescription}" for skill "${skillName}"`);
+            continue;
+          }
+
+          validMappings.push({
+            id: `import_${Date.now()}_${i}`,
+            skillId: skill.id,
+            skillName: skill.name,
+            proficiencyDescription,
+            proficiencyLevelId: level.id,
+            proficiencyLevelTitle: level.title,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            isActive: true
+          });
+        }
+
+        setErrors(importErrors);
+
+        if (importErrors.length > 0) {
+          toast({
+            title: "Import Errors",
+            description: `Found ${importErrors.length} errors. Please fix them and try again.`,
+            variant: "destructive"
+          });
+        } else {
+          onImportComplete(validMappings);
+          onOpenChange(false);
+          setFile(null);
+          setErrors([]);
+        }
+      } catch (error) {
+        setErrors(['Failed to parse CSV file. Please check the file format.']);
+        toast({
+          title: "Import Failed",
+          description: "Failed to parse CSV file. Please check the file format.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-inter font-bold text-jio-dark">Import Proficiencies</DialogTitle>
+          <DialogDescription className="font-inter">
+            Import proficiency mappings from a CSV file
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="font-inter">
+              <strong>Import Rules:</strong>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Cannot create duplicate proficiency descriptions under the same skill</li>
+                <li>Each proficiency must map to exactly one proficiency level</li>
+                <li>Each proficiency must map to exactly one skill</li>
+                <li>Only new entries and updates to existing ones are allowed</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-2">
+            <Label htmlFor="file" className="font-inter font-medium">Select CSV File</Label>
+            <Input
+              id="file"
+              type="file"
+              accept=".csv"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="font-inter"
+            />
+          </div>
+
+          {errors.length > 0 && (
+            <div className="border border-destructive rounded-lg p-4 space-y-2">
+              <h4 className="font-medium text-destructive font-inter">Import Errors:</h4>
+              <ul className="text-sm space-y-1">
+                {errors.map((error, index) => (
+                  <li key={index} className="text-destructive font-inter">• {error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-inter">
+            Cancel
+          </Button>
+          <Button onClick={validateAndImport} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
+            Import Proficiencies
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

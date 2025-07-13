@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,9 @@ export interface TaxonomyNode {
   isActive: boolean;
   children?: TaxonomyNode[];
   usageCount?: number;
+  employeeCount?: number;
+  courseCount?: number;
+  roleCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,6 +60,7 @@ const TaxonomyManagement = () => {
   const [selectedNodeType, setSelectedNodeType] = useState<'cluster' | 'group' | 'skill'>('cluster');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('tree');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -70,6 +73,9 @@ const TaxonomyManagement = () => {
     rank: 1,
     isActive: true,
     usageCount: 450,
+    employeeCount: 150,
+    courseCount: 25,
+    roleCount: 12,
     createdAt: new Date(),
     updatedAt: new Date(),
     children: [{
@@ -81,6 +87,9 @@ const TaxonomyManagement = () => {
       rank: 1,
       isActive: true,
       usageCount: 320,
+      employeeCount: 120,
+      courseCount: 18,
+      roleCount: 8,
       createdAt: new Date(),
       updatedAt: new Date(),
       children: [{
@@ -92,6 +101,9 @@ const TaxonomyManagement = () => {
         rank: 1,
         isActive: true,
         usageCount: 240,
+        employeeCount: 80,
+        courseCount: 12,
+        roleCount: 6,
         createdAt: new Date(),
         updatedAt: new Date(),
         proficiencyLevels: [{
@@ -124,9 +136,11 @@ const TaxonomyManagement = () => {
     let result: Array<TaxonomyNode & { level: number }> = [];
     
     nodes.forEach(node => {
-      result.push({ ...node, level });
-      if (node.children) {
-        result = result.concat(flattenTaxonomyData(node.children, level + 1));
+      if (node.isActive) {
+        result.push({ ...node, level });
+        if (node.children) {
+          result = result.concat(flattenTaxonomyData(node.children, level + 1));
+        }
       }
     });
     
@@ -143,25 +157,25 @@ const TaxonomyManagement = () => {
     );
   };
 
-  const filteredData = getFilteredData();
-  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
   const getTableData = () => {
-    const result: Array<{cluster: string, group: string, skill: string}> = [];
+    const result: Array<{cluster: string, group: string, skill: string, clusterId?: string, groupId?: string, skillId?: string}> = [];
     
-    const traverse = (nodes: TaxonomyNode[], clusterName = '', groupName = '') => {
+    const traverse = (nodes: TaxonomyNode[], clusterName = '', groupName = '', clusterId?: string, groupId?: string) => {
       nodes.forEach(node => {
+        if (!node.isActive) return;
+        
         if (node.type === 'cluster') {
-          traverse(node.children || [], node.name, '');
+          traverse(node.children || [], node.name, '', node.id, '');
         } else if (node.type === 'group') {
-          traverse(node.children || [], clusterName, node.name);
+          traverse(node.children || [], clusterName, node.name, clusterId, node.id);
         } else if (node.type === 'skill') {
           result.push({
             cluster: clusterName,
             group: groupName,
-            skill: node.name
+            skill: node.name,
+            clusterId,
+            groupId,
+            skillId: node.id
           });
         }
       });
@@ -182,6 +196,11 @@ const TaxonomyManagement = () => {
     );
   };
 
+  const filteredData = getFilteredData();
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   const filteredTableData = getFilteredTableData();
   const tableTotalPages = Math.ceil(filteredTableData.length / ITEMS_PER_PAGE);
   const tableStartIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -198,7 +217,6 @@ const TaxonomyManagement = () => {
   };
 
   const handleNodeCreated = (nodeData: Partial<TaxonomyNode>) => {
-    // Create new node with proper structure
     const newNode: TaxonomyNode = {
       id: Date.now().toString(),
       name: nodeData.name || '',
@@ -210,11 +228,13 @@ const TaxonomyManagement = () => {
       isActive: true,
       children: [],
       usageCount: 0,
+      employeeCount: 0,
+      courseCount: 0,
+      roleCount: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
-    // Add node to taxonomy data structure
     const updateTaxonomy = (nodes: TaxonomyNode[]): TaxonomyNode[] => {
       if (!nodeData.parentId) {
         return [...nodes, newNode];
@@ -232,13 +252,12 @@ const TaxonomyManagement = () => {
     
     toast({
       title: "Success",
-      description: `${nodeData.type} "${nodeData.name}" created successfully.`
+      description: `${nodeData.type} "${nodeData.name}" created successfully and is now visible in both Tree and Tabular views.`
     });
     setCreateDialogOpen(false);
   };
 
   const handleNodeUpdated = (nodeData: Partial<TaxonomyNode>) => {
-    // Update taxonomy data structure
     const updateTaxonomy = (nodes: TaxonomyNode[]): TaxonomyNode[] => {
       return nodes.map(node => {
         if (node.id === nodeData.id) {
@@ -255,15 +274,62 @@ const TaxonomyManagement = () => {
     
     toast({
       title: "Success",
-      description: `${nodeData.type} "${nodeData.name}" updated successfully.`
+      description: `${nodeData.type} "${nodeData.name}" updated successfully and changes are reflected in both Tree and Tabular views.`
     });
     setEditDialogOpen(false);
   };
 
   const handleInactivateNode = (node: TaxonomyNode) => {
+    const updateTaxonomy = (nodes: TaxonomyNode[]): TaxonomyNode[] => {
+      return nodes.map(n => {
+        if (n.id === node.id) {
+          return { ...n, isActive: false, updatedAt: new Date() };
+        }
+        return {
+          ...n,
+          children: n.children ? updateTaxonomy(n.children) : n.children
+        };
+      });
+    };
+
+    setTaxonomyData(updateTaxonomy(taxonomyData));
+    
     toast({
       title: "Success",
-      description: `${node.type} "${node.name}" has been inactivated. You can restore it from the Inactive Bin.`
+      description: `${node.type} "${node.name}" has been inactivated and moved to the Inactive Bin. It has been removed from both Tree and Tabular views.`
+    });
+  };
+
+  const handleBulkImportComplete = (importedData: TaxonomyNode[]) => {
+    const mergeImportedData = (existing: TaxonomyNode[], imported: TaxonomyNode[]): TaxonomyNode[] => {
+      const result = [...existing];
+      
+      imported.forEach(importedNode => {
+        const existingIndex = result.findIndex(node => node.id === importedNode.id);
+        if (existingIndex >= 0) {
+          result[existingIndex] = { ...result[existingIndex], ...importedNode, updatedAt: new Date() };
+        } else {
+          result.push({ ...importedNode, createdAt: new Date(), updatedAt: new Date() });
+        }
+      });
+      
+      return result;
+    };
+
+    setTaxonomyData(mergeImportedData(taxonomyData, importedData));
+    
+    toast({
+      title: "Import Complete",
+      description: "Taxonomy data has been imported successfully and is now visible in both Tree and Tabular views."
+    });
+  };
+
+  const handleMergeComplete = (mergedData: TaxonomyNode[]) => {
+    setTaxonomyData(mergedData);
+    
+    toast({
+      title: "Merge Complete",
+      description: "Items have been merged successfully and changes are reflected in both Tree and Tabular views."
     });
   };
 
@@ -274,10 +340,6 @@ const TaxonomyManagement = () => {
       case 'skill': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const getIndentClass = (level: number) => {
-    return `pl-${Math.min(level * 4, 16)}`;
   };
 
   return (
@@ -364,7 +426,7 @@ const TaxonomyManagement = () => {
             </Card>
 
             {/* Taxonomy Views */}
-            <Tabs defaultValue="tree" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="tree" className="font-inter">Tree View</TabsTrigger>
                 <TabsTrigger value="table" className="font-inter">Tabular View</TabsTrigger>
@@ -428,13 +490,21 @@ const TaxonomyManagement = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {tablePaginatedData.map((item, index) => (
-                            <TableRow key={index}>
-                              <TableCell className="font-inter">{item.cluster}</TableCell>
-                              <TableCell className="font-inter">{item.group}</TableCell>
-                              <TableCell className="font-inter">{item.skill}</TableCell>
+                          {tablePaginatedData.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-8 text-muted-foreground font-inter">
+                                No data found
+                              </TableCell>
                             </TableRow>
-                          ))}
+                          ) : (
+                            tablePaginatedData.map((item, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="font-inter">{item.cluster}</TableCell>
+                                <TableCell className="font-inter">{item.group}</TableCell>
+                                <TableCell className="font-inter">{item.skill}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
                         </TableBody>
                       </Table>
                     </div>
@@ -496,24 +566,14 @@ const TaxonomyManagement = () => {
             <BulkImportDialog 
               open={bulkImportOpen} 
               onOpenChange={setBulkImportOpen} 
-              onImportComplete={() => {
-                toast({
-                  title: "Import Complete",
-                  description: "Taxonomy data has been imported successfully."
-                });
-              }} 
+              onImportComplete={handleBulkImportComplete} 
             />
 
             <MergeDialog 
               open={mergeDialogOpen} 
               onOpenChange={setMergeDialogOpen} 
               nodes={taxonomyData} 
-              onMergeComplete={() => {
-                toast({
-                  title: "Merge Complete",
-                  description: "Items have been merged successfully."
-                });
-              }} 
+              onMergeComplete={handleMergeComplete} 
             />
           </div>
         </SidebarInset>

@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { RotateCcw, Search, AlertTriangle, Archive } from "lucide-react";
+import { RotateCcw, Search, AlertTriangle, Archive, Users, BookOpen, Briefcase } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -22,7 +22,9 @@ interface InactiveItem {
   parentName?: string;
   inactivatedAt: Date;
   inactivatedBy: string;
-  usageCount: number;
+  employeeCount: number;
+  courseCount: number;
+  roleCount: number;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -33,8 +35,7 @@ const InactiveBin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
-  // Mock data for inactive items
-  const [inactiveItems] = useState<InactiveItem[]>([
+  const [inactiveItems, setInactiveItems] = useState<InactiveItem[]>([
     {
       id: '1',
       name: 'Old JavaScript Framework',
@@ -43,7 +44,9 @@ const InactiveBin = () => {
       parentName: 'Frontend Development',
       inactivatedAt: new Date('2024-01-15'),
       inactivatedBy: 'Admin User',
-      usageCount: 15
+      employeeCount: 15,
+      courseCount: 3,
+      roleCount: 2
     },
     {
       id: '2',
@@ -52,7 +55,9 @@ const InactiveBin = () => {
       type: 'cluster',
       inactivatedAt: new Date('2024-02-20'),
       inactivatedBy: 'System Admin',
-      usageCount: 8
+      employeeCount: 8,
+      courseCount: 1,
+      roleCount: 1
     },
     {
       id: '3',
@@ -62,7 +67,9 @@ const InactiveBin = () => {
       parentName: 'Data Management',
       inactivatedAt: new Date('2024-03-10'),
       inactivatedBy: 'Tech Lead',
-      usageCount: 22
+      employeeCount: 22,
+      courseCount: 5,
+      roleCount: 4
     }
   ]);
 
@@ -115,9 +122,12 @@ const InactiveBin = () => {
   };
 
   const handleRestore = (item: InactiveItem) => {
+    // Remove from inactive items
+    setInactiveItems(prev => prev.filter(i => i.id !== item.id));
+    
     toast({
       title: "Item Restored",
-      description: `${item.type} "${item.name}" has been restored to the active taxonomy.`
+      description: `${item.type} "${item.name}" has been restored and removed from the Inactive Bin. It will now appear in the active taxonomy.`
     });
   };
 
@@ -161,7 +171,7 @@ const InactiveBin = () => {
                 <div>
                   <h3 className="font-medium text-orange-800 font-inter">Items are Inactive</h3>
                   <p className="text-sm text-orange-700 font-inter">
-                    These items have been inactivated and can be restored within 30 days. After that, they may be permanently removed.
+                    These items have been inactivated and can be restored at any time. Restoring will make them active again.
                   </p>
                 </div>
               </div>
@@ -227,14 +237,15 @@ const InactiveBin = () => {
                         <TableHead className="font-inter">Parent</TableHead>
                         <TableHead className="font-inter">Description</TableHead>
                         <TableHead className="font-inter">Inactivated</TableHead>
-                        <TableHead className="font-inter">Usage</TableHead>
+                        <TableHead className="font-inter">Status</TableHead>
+                        <TableHead className="font-inter">Impact</TableHead>
                         <TableHead className="font-inter">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedData.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground font-inter">
+                          <TableCell colSpan={8} className="text-center py-8 text-muted-foreground font-inter">
                             <Archive className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             No inactive items found
                           </TableCell>
@@ -261,7 +272,25 @@ const InactiveBin = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="text-sm font-inter">{item.usageCount} users</div>
+                              <Badge variant="outline" className="text-orange-600 font-inter">
+                                Inactive
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1 text-sm font-inter">
+                                <div className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {item.employeeCount} employees
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <BookOpen className="h-3 w-3" />
+                                  {item.courseCount} courses
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Briefcase className="h-3 w-3" />
+                                  {item.roleCount} roles
+                                </div>
+                              </div>
                             </TableCell>
                             <TableCell>
                               <Button 
