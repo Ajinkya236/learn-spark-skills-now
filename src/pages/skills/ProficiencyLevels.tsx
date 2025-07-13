@@ -363,11 +363,7 @@ const ProficiencyLevels = () => {
                             </TableRow> : paginatedMappings.map(mapping => <TableRow key={mapping.id}>
                                 <TableCell className="font-medium font-inter">{mapping.skillName}</TableCell>
                                 <TableCell className="font-inter">{mapping.proficiencyDescription}</TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className="font-inter">
-                                    {mapping.proficiencyLevelTitle}
-                                  </Badge>
-                                </TableCell>
+                                
                                 <TableCell className="font-inter">
                                   {mapping.createdAt.toLocaleDateString()}
                                 </TableCell>
