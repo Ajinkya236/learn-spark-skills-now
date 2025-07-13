@@ -32,8 +32,8 @@ interface SkillsManagementCardProps {
   onGroupFilterChange: (value: string) => void;
   onPageChange: (page: number) => void;
   onAddSkills: () => void;
-  onEditSkill: (skillId: string) => void;
-  onDeleteSkill: (skillId: string) => void;
+  onEditSkill: (skill: JobRoleSkill) => void;
+  onDeleteSkill: (skill: JobRoleSkill) => void;
 }
 
 export const SkillsManagementCard = ({

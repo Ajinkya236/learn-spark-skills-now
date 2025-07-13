@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { JobRoleDetailsHeader } from "@/components/job-role/JobRoleDetailsHeader";
 import { JobRoleInfoCard } from "@/components/job-role/JobRoleInfoCard";
 import { SkillsManagementCard } from "@/components/job-role/SkillsManagementCard";
+import { EditSkillDialog } from "@/components/job-role/EditSkillDialog";
+import { DeleteSkillDialog } from "@/components/job-role/DeleteSkillDialog";
 
 interface JobRoleSkill {
   id: string;
@@ -29,6 +31,8 @@ const JobRoleDetails = () => {
   const [clusterFilter, setClusterFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingSkill, setEditingSkill] = useState<JobRoleSkill | null>(null);
+  const [deletingSkill, setDeletingSkill] = useState<JobRoleSkill | null>(null);
 
   // Mock data for the job role
   const jobRole = {
@@ -40,7 +44,7 @@ const JobRoleDetails = () => {
     maxSkills: 25
   };
 
-  const [skills] = useState<JobRoleSkill[]>([
+  const [skills, setSkills] = useState<JobRoleSkill[]>([
     {
       id: '1',
       no: 1,
@@ -93,12 +97,29 @@ const JobRoleDetails = () => {
     navigate(`/skills/job-role-relationship/${id}/add-skills`);
   };
 
-  const handleEditSkill = (skillId: string) => {
-    toast.success("Edit skill functionality would be implemented here");
+  const handleEditSkill = (skill: JobRoleSkill) => {
+    setEditingSkill(skill);
   };
 
-  const handleDeleteSkill = (skillId: string) => {
-    toast.success("Delete skill functionality would be implemented here");
+  const handleDeleteSkill = (skill: JobRoleSkill) => {
+    setDeletingSkill(skill);
+  };
+
+  const handleSaveSkillEdit = (skillId: string, updates: { proficiencyLevel: string; criticalityLevel: 'High' | 'Medium' | 'Low' }) => {
+    setSkills(prev => prev.map(skill => 
+      skill.id === skillId 
+        ? { ...skill, ...updates }
+        : skill
+    ));
+    toast.success("Skill requirements updated successfully");
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingSkill) {
+      setSkills(prev => prev.filter(skill => skill.id !== deletingSkill.id));
+      toast.success(`${deletingSkill.skillName} removed from job role`);
+      setDeletingSkill(null);
+    }
   };
 
   return (
@@ -135,6 +156,20 @@ const JobRoleDetails = () => {
               onAddSkills={handleAddSkills}
               onEditSkill={handleEditSkill}
               onDeleteSkill={handleDeleteSkill}
+            />
+
+            <EditSkillDialog
+              skill={editingSkill}
+              open={!!editingSkill}
+              onOpenChange={(open) => !open && setEditingSkill(null)}
+              onSave={handleSaveSkillEdit}
+            />
+
+            <DeleteSkillDialog
+              skillName={deletingSkill?.skillName || null}
+              open={!!deletingSkill}
+              onOpenChange={(open) => !open && setDeletingSkill(null)}
+              onConfirm={handleConfirmDelete}
             />
           </div>
         </SidebarInset>

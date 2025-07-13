@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,51 +9,92 @@ import { Textarea } from "@/components/ui/textarea";
 interface EditLevelDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  level: { title: string; description: string };
-  onLevelChange: (level: { title: string; description: string }) => void;
-  onSave: () => void;
+  onSubmit: (levelData: any) => void;
+  title: string;
+  initialData?: any;
 }
 
-export const EditLevelDialog: React.FC<EditLevelDialogProps> = ({
+export const EditLevelDialog = ({
   open,
   onOpenChange,
-  level,
-  onLevelChange,
-  onSave
-}) => {
+  onSubmit,
+  title,
+  initialData
+}: EditLevelDialogProps) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    order: 1
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        order: initialData.order || 1
+      });
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        order: 1
+      });
+    }
+  }, [initialData, open]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Proficiency Level</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {initialData ? 'Edit proficiency level details' : 'Create a new proficiency level'}
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit-title" className="text-right">
-              Title
-            </Label>
-            <Input 
-              id="edit-title" 
-              value={level.title} 
-              onChange={(e) => onLevelChange({ ...level, title: e.target.value })} 
-              className="col-span-3" 
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit-desc" className="text-right">
-              Description
-            </Label>
-            <Textarea 
-              id="edit-desc" 
-              value={level.description} 
-              onChange={(e) => onLevelChange({ ...level, description: e.target.value })} 
-              className="col-span-3" 
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              required
             />
           </div>
-        </div>
-        <Button onClick={onSave} className="bg-blue-600 hover:bg-blue-700">
-          Save Changes
-        </Button>
+          <div>
+            <Label htmlFor="order">Order</Label>
+            <Input
+              id="order"
+              type="number"
+              min="1"
+              value={formData.order}
+              onChange={(e) => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) }))}
+              required
+            />
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button type="submit">Save</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

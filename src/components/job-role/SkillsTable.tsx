@@ -20,8 +20,8 @@ interface SkillsTableProps {
   skills: JobRoleSkill[];
   currentPage: number;
   totalPages: number;
-  onEditSkill: (skillId: string) => void;
-  onDeleteSkill: (skillId: string) => void;
+  onEditSkill: (skill: JobRoleSkill) => void;
+  onDeleteSkill: (skill: JobRoleSkill) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -70,10 +70,10 @@ export const SkillsTable = ({
                 <TableCell>{skill.group}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="ghost" onClick={() => onEditSkill(skill.id)}>
+                    <Button size="sm" variant="ghost" onClick={() => onEditSkill(skill)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => onDeleteSkill(skill.id)}>
+                    <Button size="sm" variant="ghost" onClick={() => onDeleteSkill(skill)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -84,7 +84,6 @@ export const SkillsTable = ({
         </Table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-4">
           <Pagination>
