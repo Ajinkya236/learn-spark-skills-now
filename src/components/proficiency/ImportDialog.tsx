@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Upload } from "lucide-react";
 
 interface ImportDialogProps {
   open: boolean;
@@ -11,20 +10,20 @@ interface ImportDialogProps {
   onImport: (data: any) => void;
 }
 
-export const ImportDialog = ({
-  open,
-  onOpenChange,
-  onImport
-}: ImportDialogProps) => {
-  const [file, setFile] = useState<File | null>(null);
+export const ImportDialog = ({ open, onOpenChange, onImport }: ImportDialogProps) => {
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileUpload = (file: File) => {
+    // Mock import functionality
+    onImport({ file: file.name });
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    if (file) {
-      // Simulate file processing
-      onImport({ file });
-      onOpenChange(false);
-      setFile(null);
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileUpload(files[0]);
     }
   };
 
@@ -34,27 +33,41 @@ export const ImportDialog = ({
         <DialogHeader>
           <DialogTitle>Import Data</DialogTitle>
           <DialogDescription>
-            Upload a file to import proficiency levels
+            Upload a file to import proficiency data
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="file">Select File</Label>
-            <Input
-              id="file"
-              type="file"
-              accept=".csv,.json,.xlsx"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              required
-            />
-          </div>
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" disabled={!file}>Import</Button>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-          </div>
-        </form>
+        <div
+          className={`border-2 border-dashed rounded-lg p-8 text-center ${
+            isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+          }`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+        >
+          <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground mb-4">
+            Drag and drop your file here, or click to browse
+          </p>
+          <input
+            type="file"
+            className="hidden"
+            id="file-upload"
+            onChange={(e) => {
+              const files = e.target.files;
+              if (files && files.length > 0) {
+                handleFileUpload(files[0]);
+              }
+            }}
+          />
+          <Button asChild variant="outline">
+            <label htmlFor="file-upload" className="cursor-pointer">
+              Choose File
+            </label>
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
