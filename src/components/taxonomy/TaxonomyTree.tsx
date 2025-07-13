@@ -1,12 +1,9 @@
 
 import React, { useState } from 'react';
-import { ChevronRight, ChevronDown, Plus, Edit, Archive, Users, BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TaxonomyNode } from '@/pages/skills/TaxonomyManagement';
+import { TaxonomyNode } from '@/hooks/useTaxonomyManagement';
 import { cn } from '@/lib/utils';
+import { TreeNode } from './TreeNode';
+import { InactivateDialog } from './InactivateDialog';
 
 interface TaxonomyTreeProps {
   data: TaxonomyNode[];
@@ -39,60 +36,6 @@ export const TaxonomyTree: React.FC<TaxonomyTreeProps> = ({
     setExpandedNodes(newExpanded);
   };
 
-  const getNodeIcon = (type: string) => {
-    switch (type) {
-      case 'cluster':
-        return '📁';
-      case 'group':
-        return '📂';
-      case 'skill':
-        return '🎯';
-      default:
-        return '📄';
-    }
-  };
-
-  const getChildType = (parentType: string): 'cluster' | 'group' | 'skill' => {
-    switch (parentType) {
-      case 'cluster':
-        return 'group';
-      case 'group':
-        return 'skill';
-      default:
-        return 'skill';
-    }
-  };
-
-  // Helper function to get all children recursively
-  const getAllChildren = (node: TaxonomyNode): TaxonomyNode[] => {
-    let children: TaxonomyNode[] = [];
-    if (node.children) {
-      node.children.forEach(child => {
-        children.push(child);
-        children = children.concat(getAllChildren(child));
-      });
-    }
-    return children;
-  };
-
-  const getImpactAnalysis = (node: TaxonomyNode) => {
-    const allChildren = getAllChildren(node);
-    
-    const clusters = node.type === 'cluster' ? 1 : allChildren.filter(child => child.type === 'cluster').length;
-    const groups = node.type === 'group' ? 1 : allChildren.filter(child => child.type === 'group').length;
-    const skills = node.type === 'skill' ? 1 : allChildren.filter(child => child.type === 'skill').length;
-    
-    // Calculate total usage across all children
-    let totalUsers = node.usageCount || 0;
-    allChildren.forEach(child => {
-      totalUsers += child.usageCount || 0;
-    });
-    
-    const courses = Math.floor(totalUsers * 0.3); // Simulated course impact
-
-    return { clusters, groups, skills, totalUsers, courses, childrenCount: allChildren.length };
-  };
-
   const handleInactivateClick = (node: TaxonomyNode) => {
     setInactivateDialog({ open: true, node });
   };
@@ -108,67 +51,20 @@ export const TaxonomyTree: React.FC<TaxonomyTreeProps> = ({
     setInactivateDialog({ open: false, node: null });
   };
 
-  const impact = inactivateDialog.node ? getImpactAnalysis(inactivateDialog.node) : null;
-
   return (
     <>
       <div className={cn("space-y-1", level === 0 && "p-4")}>
         {data.map(node => (
-          <div key={node.id} className="group">
-            <div className={cn("flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors", `ml-${level * 4}`)}>
-              {/* Expand/Collapse Button */}
-              {node.children && node.children.length > 0 ? (
-                <Button variant="ghost" size="sm" className="p-0 h-6 w-6" onClick={() => toggleExpanded(node.id)}>
-                  {expandedNodes.has(node.id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </Button>
-              ) : (
-                <div className="w-6" />
-              )}
-
-              {/* Node Icon & Info */}
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <span className="text-lg">{getNodeIcon(node.type)}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="font-medium text-sm md:text-base truncate">{node.name}</h4>
-                    <Badge variant="secondary" className="text-xs">
-                      {node.type}
-                    </Badge>
-                  </div>
-                  {node.description && <p className="text-xs text-muted-foreground truncate">{node.description}</p>}
-                  <div className="flex items-center gap-4 mt-1">
-                    {node.usageCount !== undefined && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Users className="h-3 w-3" />
-                        {node.usageCount} users
-                      </div>
-                    )}
-                    {node.type === 'skill' && node.proficiencyLevels && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <BookOpen className="h-3 w-3" />
-                        {node.proficiencyLevels.length} levels
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {node.type !== 'skill' && (
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => onCreateChild(getChildType(node.type))}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => onEdit(node)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-orange-600 hover:text-orange-600" onClick={() => handleInactivateClick(node)}>
-                  <Archive className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
+          <TreeNode
+            key={node.id}
+            node={node}
+            level={level}
+            isExpanded={expandedNodes.has(node.id)}
+            onToggleExpanded={toggleExpanded}
+            onEdit={onEdit}
+            onInactivate={handleInactivateClick}
+            onCreateChild={onCreateChild}
+          >
             {/* Children */}
             {node.children && node.children.length > 0 && expandedNodes.has(node.id) && (
               <TaxonomyTree 
@@ -179,67 +75,17 @@ export const TaxonomyTree: React.FC<TaxonomyTreeProps> = ({
                 level={level + 1}
               />
             )}
-          </div>
+          </TreeNode>
         ))}
       </div>
 
       {/* Inactivate Confirmation Dialog */}
-      <Dialog open={inactivateDialog.open} onOpenChange={(open) => !open && handleCancelInactivate()}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Archive className="h-5 w-5 text-orange-600" />
-              Confirm Inactivation
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to inactivate "{inactivateDialog.node?.name}"?
-            </DialogDescription>
-          </DialogHeader>
-
-          {impact && (
-            <div className="space-y-4">
-              <Alert>
-                <AlertDescription>
-                  <div className="space-y-2">
-                    <p className="font-medium">Impact Analysis:</p>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      {impact.clusters > 0 && (
-                        <div>• {impact.clusters} Cluster{impact.clusters > 1 ? 's' : ''}</div>
-                      )}
-                      {impact.groups > 0 && (
-                        <div>• {impact.groups} Group{impact.groups > 1 ? 's' : ''}</div>
-                      )}
-                      {impact.skills > 0 && (
-                        <div>• {impact.skills} Skill{impact.skills > 1 ? 's' : ''}</div>
-                      )}
-                      <div>• {impact.totalUsers} Users affected</div>
-                      <div>• {impact.courses} Courses impacted</div>
-                    </div>
-                    {impact.childrenCount > 0 && (
-                      <p className="text-sm font-medium text-orange-600 mt-2">
-                        Warning: This will also inactivate {impact.childrenCount} child item{impact.childrenCount > 1 ? 's' : ''}.
-                      </p>
-                    )}
-                  </div>
-                </AlertDescription>
-              </Alert>
-              
-              <p className="text-sm text-muted-foreground">
-                This item will be moved to the Inactive Bin and can be restored within 30 days.
-              </p>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancelInactivate}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmInactivate}>
-              Inactivate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <InactivateDialog
+        open={inactivateDialog.open}
+        node={inactivateDialog.node}
+        onClose={handleCancelInactivate}
+        onConfirm={handleConfirmInactivate}
+      />
     </>
   );
 };
