@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,9 @@ import TaxonomyManagement from "./pages/skills/TaxonomyManagement";
 import InactiveBin from "./pages/skills/InactiveBin";
 import ProficiencyLevels from "./pages/skills/ProficiencyLevels";
 import JobRoleSkillRelationship from "./pages/skills/JobRoleSkillRelationship";
+import JobPositionSkillRelationship from "./pages/skills/JobPositionSkillRelationship";
+import JobPositionDetails from "./pages/skills/JobPositionDetails";
+import AddSkillsToJobPosition from "./pages/skills/AddSkillsToJobPosition";
 import SkillSkillRelationship from "./pages/skills/SkillSkillRelationship";
 import LearningContentSkillRelationship from "./pages/skills/LearningContentSkillRelationship";
 import EmployeeSkillRelationship from "./pages/skills/EmployeeSkillRelationship";
@@ -35,6 +39,9 @@ function App() {
             <Route path="/skills/job-role-relationship" element={<JobRoleSkillRelationship />} />
             <Route path="/skills/job-role-relationship/:id" element={<JobRoleDetails />} />
             <Route path="/skills/job-role-relationship/:id/add-skills" element={<AddSkillsToJobRole />} />
+            <Route path="/skills/job-position-relationship" element={<JobPositionSkillRelationship />} />
+            <Route path="/skills/job-position-relationship/:id" element={<JobPositionDetails />} />
+            <Route path="/skills/job-position-relationship/:id/add-skills" element={<AddSkillsToJobPosition />} />
             <Route path="/skills/skill-relationship" element={<SkillSkillRelationship />} />
             <Route path="/skills/learning-content-relationship" element={<LearningContentSkillRelationship />} />
             <Route path="/skills/employee-relationship" element={<EmployeeSkillRelationship />} />
