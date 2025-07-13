@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { TaxonomyNode } from '@/hooks/useTaxonomyManagement';
+import { TaxonomyNode } from '@/types/taxonomy';
 import { cn } from '@/lib/utils';
 import { TreeNode } from './TreeNode';
 import { InactivateDialog } from './InactivateDialog';

@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { ChevronRight, ChevronDown, Plus, Edit, Archive, Users, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TaxonomyNode } from '@/hooks/useTaxonomyManagement';
+import { TaxonomyNode } from '@/types/taxonomy';
 import { cn } from '@/lib/utils';
 
 interface TreeNodeProps {

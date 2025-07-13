@@ -15,7 +15,8 @@ import { TaxonomyHeader } from "@/components/taxonomy/TaxonomyHeader";
 import { QuickActions } from "@/components/taxonomy/QuickActions";
 import { TreeViewTab } from "@/components/taxonomy/TreeViewTab";
 import { TabularViewTab } from "@/components/taxonomy/TabularViewTab";
-import { useTaxonomyManagement, TaxonomyNode } from "@/hooks/useTaxonomyManagement";
+import { useTaxonomyManagement } from "@/hooks/useTaxonomyManagement";
+import { TaxonomyNode } from "@/types/taxonomy";
 
 const ITEMS_PER_PAGE = 10;
 

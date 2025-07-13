@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { TaxonomyTree } from "@/components/taxonomy/TaxonomyTree";
-import { TaxonomyNode } from "@/hooks/useTaxonomyManagement";
+import { TaxonomyNode } from "@/types/taxonomy";
 
 interface TreeViewTabProps {
   taxonomyData: TaxonomyNode[];

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Search, Edit, Archive } from "lucide-react";
-import { TaxonomyNode } from "@/hooks/useTaxonomyManagement";
+import { TaxonomyNode } from "@/types/taxonomy";
 
 interface TabularViewTabProps {
   searchTerm: string;
