@@ -74,11 +74,37 @@ const AddSkillsToJobRole = () => {
       group: 'Unit Testing',
       relevanceMatch: 71,
       isSelected: false
+    },
+    {
+      id: '6',
+      name: 'Redux',
+      cluster: 'Programming',
+      group: 'State Management',
+      relevanceMatch: 68,
+      isSelected: false
+    },
+    {
+      id: '7',
+      name: 'MongoDB',
+      cluster: 'Database',
+      group: 'NoSQL Database',
+      relevanceMatch: 65,
+      isSelected: false
+    },
+    {
+      id: '8',
+      name: 'Kubernetes',
+      cluster: 'DevOps',
+      group: 'Container Orchestration',
+      relevanceMatch: 62,
+      isSelected: false
     }
   ]);
 
   const filteredSkills = suggestedSkills.filter(skill => 
-    skill.name.toLowerCase().includes(searchTerm.toLowerCase())
+    skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    skill.cluster.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    skill.group.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleSkillSelection = (skillId: string) => {
@@ -123,6 +149,8 @@ const AddSkillsToJobRole = () => {
     }
   };
 
+  const selectedCount = suggestedSkills.filter(s => s.isSelected).length;
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -131,15 +159,15 @@ const AddSkillsToJobRole = () => {
           <div className="flex-1 space-y-6 p-4 md:p-6">
             {/* Header with Back Button */}
             <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              <div className="flex-1">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
                   {step === 'select' ? 'Select Skills' : 'Configure Skills'}
                 </h1>
-                <p className="text-muted-foreground">
+                <p className="text-sm md:text-base text-muted-foreground">
                   {step === 'select' ? 'Choose skills to add to the job role' : 'Set proficiency levels and criticality'}
                 </p>
               </div>
@@ -148,14 +176,14 @@ const AddSkillsToJobRole = () => {
             {step === 'select' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Suggested Skills</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">Suggested Skills</CardTitle>
                   <CardDescription>
                     Skills are sorted by relevance match percentage
                   </CardDescription>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search skills..."
+                      placeholder="Search skills, clusters, or groups..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -163,36 +191,46 @@ const AddSkillsToJobRole = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredSkills.map((skill) => (
                       <div
                         key={skill.id}
-                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                          skill.isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                        className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                          skill.isSelected 
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20' 
+                            : 'border-border hover:border-primary/50'
                         }`}
                         onClick={() => toggleSkillSelection(skill.id)}
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-medium">{skill.name}</h3>
-                          <Badge variant="secondary">{skill.relevanceMatch}%</Badge>
+                          <h3 className="font-medium text-sm md:text-base truncate pr-2">{skill.name}</h3>
+                          <Badge variant="secondary" className="shrink-0 text-xs">
+                            {skill.relevanceMatch}%
+                          </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-1">{skill.cluster}</p>
-                        <p className="text-xs text-muted-foreground">{skill.group}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground mb-1 truncate">{skill.cluster}</p>
+                        <p className="text-xs text-muted-foreground truncate">{skill.group}</p>
                         {skill.isSelected && (
                           <div className="mt-2">
-                            <Badge variant="default">Selected</Badge>
+                            <Badge variant="default" className="text-xs">Selected</Badge>
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex justify-between items-center mt-6">
+                  {filteredSkills.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No skills found matching your search.</p>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6 pt-6 border-t">
                     <p className="text-sm text-muted-foreground">
-                      {suggestedSkills.filter(s => s.isSelected).length} skills selected
+                      {selectedCount} skill{selectedCount !== 1 ? 's' : ''} selected
                     </p>
-                    <Button onClick={proceedToConfiguration}>
-                      Continue
+                    <Button onClick={proceedToConfiguration} disabled={selectedCount === 0}>
+                      Continue to Configuration
                       <Plus className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
@@ -203,7 +241,7 @@ const AddSkillsToJobRole = () => {
             {step === 'configure' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Configure Selected Skills</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">Configure Selected Skills</CardTitle>
                   <CardDescription>
                     Set proficiency levels and criticality for each selected skill
                   </CardDescription>
@@ -212,18 +250,24 @@ const AddSkillsToJobRole = () => {
                   <div className="space-y-4">
                     {selectedSkills.map((skill) => (
                       <div key={skill.id} className="p-4 border rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                          <div>
-                            <h3 className="font-medium">{skill.name}</h3>
-                            <p className="text-sm text-muted-foreground">{skill.cluster} • {skill.group}</p>
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start lg:items-center">
+                          <div className="lg:col-span-1">
+                            <h3 className="font-medium text-sm md:text-base">{skill.name}</h3>
+                            <p className="text-xs md:text-sm text-muted-foreground">
+                              {skill.cluster} • {skill.group}
+                            </p>
+                            <Badge variant="secondary" className="mt-1 text-xs">
+                              {skill.relevanceMatch}% match
+                            </Badge>
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">Proficiency Level</label>
+                          
+                          <div className="space-y-2">
+                            <label className="text-xs md:text-sm font-medium">Proficiency Level</label>
                             <Select 
                               value={skill.proficiencyLevel} 
                               onValueChange={(value) => updateSkillConfig(skill.id, 'proficiencyLevel', value)}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="w-full">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -234,13 +278,14 @@ const AddSkillsToJobRole = () => {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">Criticality</label>
+                          
+                          <div className="space-y-2">
+                            <label className="text-xs md:text-sm font-medium">Criticality</label>
                             <Select 
                               value={skill.criticalityLevel} 
                               onValueChange={(value) => updateSkillConfig(skill.id, 'criticalityLevel', value as 'High' | 'Medium' | 'Low')}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="w-full">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -250,18 +295,39 @@ const AddSkillsToJobRole = () => {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div>
-                            <Badge variant="secondary">{skill.relevanceMatch}% match</Badge>
+                          
+                          <div className="flex justify-center lg:justify-start">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSuggestedSkills(prev => prev.map(s => 
+                                  s.id === skill.id ? { ...s, isSelected: false } : s
+                                ));
+                                setSelectedSkills(prev => prev.filter(s => s.id !== skill.id));
+                              }}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              Remove
+                            </Button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex justify-end mt-6">
-                    <Button onClick={handleSubmit}>
-                      Add Skills to Job Role
-                    </Button>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6 pt-6 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      {selectedSkills.length} skill{selectedSkills.length !== 1 ? 's' : ''} configured
+                    </p>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setStep('select')}>
+                        Back to Selection
+                      </Button>
+                      <Button onClick={handleSubmit}>
+                        Add Skills to Job Role
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
