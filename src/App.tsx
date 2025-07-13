@@ -8,8 +8,11 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import TaxonomyManagement from "./pages/skills/TaxonomyManagement";
 import InactiveBin from "./pages/skills/InactiveBin";
-import SkillRelationships from "./pages/skills/SkillRelationships";
 import ProficiencyLevels from "./pages/skills/ProficiencyLevels";
+import JobRoleSkillRelationship from "./pages/skills/JobRoleSkillRelationship";
+import SkillSkillRelationship from "./pages/skills/SkillSkillRelationship";
+import LearningContentSkillRelationship from "./pages/skills/LearningContentSkillRelationship";
+import EmployeeSkillRelationship from "./pages/skills/EmployeeSkillRelationship";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,8 +29,11 @@ const App = () => (
           <Route path="/skills/taxonomy" element={<TaxonomyManagement />} />
           <Route path="/skills/taxonomy/inactive" element={<InactiveBin />} />
           <Route path="/skills/inactive-bin" element={<InactiveBin />} />
-          <Route path="/skills/relationships" element={<SkillRelationships />} />
           <Route path="/skills/proficiency" element={<ProficiencyLevels />} />
+          <Route path="/skills/job-role-relationship" element={<JobRoleSkillRelationship />} />
+          <Route path="/skills/skill-relationship" element={<SkillSkillRelationship />} />
+          <Route path="/skills/learning-content-relationship" element={<LearningContentSkillRelationship />} />
+          <Route path="/skills/employee-relationship" element={<EmployeeSkillRelationship />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
