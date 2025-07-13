@@ -75,11 +75,23 @@ const SkillSkillRelationship = () => {
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [selectedSkillForEdit, setSelectedSkillForEdit] = useState<SkillRelation | null>(null);
   const [skillSearchTerm, setSkillSearchTerm] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [importProgress, setImportProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+
+  // AI suggested skills based on the current skill
+  const getAISuggestedSkills = (currentSkill: string): string[] => {
+    const suggestions: Record<string, string[]> = {
+      "JavaScript": ["TypeScript", "React", "Vue.js", "Angular"],
+      "Python": ["Django", "Flask", "FastAPI", "Pandas"],
+      "Figma": ["Adobe XD", "Sketch", "InVision", "Framer"],
+      // Add more AI suggestions as needed
+    };
+    return suggestions[currentSkill] || [];
+  };
 
   const filteredRelations = skillRelations.filter(relation =>
     relation.skill.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,9 +129,7 @@ const SkillSkillRelationship = () => {
         : relation
     ));
 
-    toast.success(`Added ${selectedSkills.length} skill relation(s) successfully`, {
-      position: window.innerWidth <= 768 ? "bottom-center" : "bottom-left"
-    });
+    toast.success(`Added ${selectedSkills.length} skill relation(s) successfully`);
 
     setSelectedSkills([]);
     setSkillSearchTerm("");
@@ -136,9 +146,7 @@ const SkillSkillRelationship = () => {
         : relation
     ));
 
-    toast.success(`Removed ${selectedSkills.length} skill relation(s) successfully`, {
-      position: window.innerWidth <= 768 ? "bottom-center" : "bottom-left"
-    });
+    toast.success(`Removed ${selectedSkills.length} skill relation(s) successfully`);
 
     setSelectedSkills([]);
     setIsRemoveDialogOpen(false);
@@ -155,13 +163,11 @@ const SkillSkillRelationship = () => {
       setImportProgress(i);
     }
 
-    // Mock validation and import logic
-    toast.success("Bulk import completed successfully", {
-      position: window.innerWidth <= 768 ? "bottom-center" : "bottom-left"
-    });
+    toast.success("Bulk import completed successfully");
 
     setIsUploading(false);
     setImportProgress(0);
+    setIsBulkImportOpen(false);
   };
 
   const downloadTemplate = () => {
@@ -187,13 +193,9 @@ const SkillSkillRelationship = () => {
                 <p className="text-muted-foreground">Manage relationships between skills</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
-                <Button onClick={downloadTemplate} variant="outline" className="w-full sm:w-auto">
-                  <Download className="mr-2 h-4 w-4" />
-                  Template
-                </Button>
-                <Dialog>
+                <Dialog open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen}>
                   <DialogTrigger asChild>
-                    <Button className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
                       <Upload className="mr-2 h-4 w-4" />
                       Bulk Import
                     </Button>
@@ -206,6 +208,10 @@ const SkillSkillRelationship = () => {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
+                      <Button onClick={downloadTemplate} variant="outline" className="w-full">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Template
+                      </Button>
                       <Input
                         type="file"
                         accept=".csv"
@@ -296,6 +302,28 @@ const SkillSkillRelationship = () => {
                                     </DialogDescription>
                                   </DialogHeader>
                                   <div className="space-y-4">
+                                    <div>
+                                      <div className="text-sm font-medium mb-2 text-blue-600">
+                                        AI Suggested Related Skills
+                                      </div>
+                                      <div className="flex flex-wrap gap-1 mb-4">
+                                        {selectedSkillForEdit && getAISuggestedSkills(selectedSkillForEdit.skill).map((skill) => (
+                                          <Badge 
+                                            key={skill} 
+                                            variant="outline" 
+                                            className="cursor-pointer hover:bg-blue-50 border-blue-200"
+                                            onClick={() => {
+                                              if (!selectedSkills.includes(skill)) {
+                                                setSelectedSkills(prev => [...prev, skill]);
+                                              }
+                                            }}
+                                          >
+                                            {skill}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+
                                     <div className="relative">
                                       <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                       <Input

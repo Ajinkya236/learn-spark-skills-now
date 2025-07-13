@@ -135,6 +135,18 @@ const TaxonomyManagement = () => {
     }]
   }]);
 
+  // Helper function to get all children recursively
+  const getAllChildren = (node: TaxonomyNode): TaxonomyNode[] => {
+    let children: TaxonomyNode[] = [];
+    if (node.children) {
+      node.children.forEach(child => {
+        children.push(child);
+        children = children.concat(getAllChildren(child));
+      });
+    }
+    return children;
+  };
+
   const flattenTaxonomyData = (nodes: TaxonomyNode[], level = 0): Array<TaxonomyNode & { level: number }> => {
     let result: Array<TaxonomyNode & { level: number }> = [];
     
@@ -319,39 +331,58 @@ const TaxonomyManagement = () => {
   };
 
   const handleInactivateNode = (node: TaxonomyNode) => {
-    // Add to global inactive items
-    const inactiveItem = {
-      id: node.id,
-      name: node.name,
-      description: node.description,
-      type: node.type,
-      parentName: node.parentId ? findNodeById(taxonomyData, node.parentId)?.name : undefined,
-      inactivatedAt: new Date(),
-      inactivatedBy: 'Current User',
-      employeeCount: node.employeeCount || 0,
-      courseCount: node.courseCount || 0,
-      roleCount: node.roleCount || 0
-    };
-    
-    globalInactiveItems.push(inactiveItem);
+    // Get all children that will be inactivated
+    const allChildren = getAllChildren(node);
+    const allNodesToInactivate = [node, ...allChildren];
 
-    const updateTaxonomy = (nodes: TaxonomyNode[]): TaxonomyNode[] => {
+    // Add all items to global inactive items
+    allNodesToInactivate.forEach(nodeToInactivate => {
+      const inactiveItem = {
+        id: nodeToInactivate.id,
+        name: nodeToInactivate.name,
+        description: nodeToInactivate.description,
+        type: nodeToInactivate.type,
+        parentName: nodeToInactivate.parentId ? findNodeById(taxonomyData, nodeToInactivate.parentId)?.name : undefined,
+        inactivatedAt: new Date(),
+        inactivatedBy: 'Current User',
+        employeeCount: nodeToInactivate.employeeCount || 0,
+        courseCount: nodeToInactivate.courseCount || 0,
+        roleCount: nodeToInactivate.roleCount || 0
+      };
+      
+      globalInactiveItems.push(inactiveItem);
+    });
+
+    // Recursively inactivate node and all its children
+    const inactivateNodeAndChildren = (nodes: TaxonomyNode[]): TaxonomyNode[] => {
       return nodes.map(n => {
         if (n.id === node.id) {
           return { ...n, isActive: false, updatedAt: new Date() };
         }
+        
+        // Check if this node is a child of the inactivated node
+        const isChildOfInactivated = allNodesToInactivate.some(inactiveNode => inactiveNode.id === n.id);
+        if (isChildOfInactivated) {
+          return { ...n, isActive: false, updatedAt: new Date() };
+        }
+        
         return {
           ...n,
-          children: n.children ? updateTaxonomy(n.children) : n.children
+          children: n.children ? inactivateNodeAndChildren(n.children) : n.children
         };
       });
     };
 
-    setTaxonomyData(updateTaxonomy(taxonomyData));
+    setTaxonomyData(inactivateNodeAndChildren(taxonomyData));
+    
+    const childrenCount = allChildren.length;
+    const message = childrenCount > 0 
+      ? `${node.type} "${node.name}" and ${childrenCount} child item${childrenCount > 1 ? 's' : ''} have been inactivated and moved to the Inactive Bin.`
+      : `${node.type} "${node.name}" has been inactivated and moved to the Inactive Bin.`;
     
     toast({
       title: "Success",
-      description: `${node.type} "${node.name}" has been inactivated and moved to the Inactive Bin. It has been removed from both Tree and Tabular views.`
+      description: message
     });
   };
 
@@ -427,28 +458,28 @@ const TaxonomyManagement = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <Button 
                     onClick={() => handleCreateNode('cluster')} 
-                    className="justify-start font-inter bg-jio-blue hover:bg-jio-blue/90 text-jio-white"
+                    className="justify-start font-inter bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Cluster
                   </Button>
                   <Button 
                     onClick={() => handleCreateNode('group')} 
-                    className="justify-start font-inter bg-jio-blue hover:bg-jio-blue/90 text-jio-white"
+                    className="justify-start font-inter bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Group
                   </Button>
                   <Button 
                     onClick={() => handleCreateNode('skill')} 
-                    className="justify-start font-inter bg-jio-blue hover:bg-jio-blue/90 text-jio-white"
+                    className="justify-start font-inter bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Skill
                   </Button>
                   <Button 
                     onClick={() => setMergeDialogOpen(true)} 
-                    className="justify-start font-inter bg-jio-blue hover:bg-jio-blue/90 text-jio-white"
+                    className="justify-start font-inter bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <Merge className="mr-2 h-4 w-4" />
                     Merge Items

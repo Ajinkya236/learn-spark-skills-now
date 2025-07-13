@@ -63,27 +63,34 @@ export const TaxonomyTree: React.FC<TaxonomyTreeProps> = ({
     }
   };
 
-  const getImpactAnalysis = (node: TaxonomyNode) => {
-    const getChildCount = (n: TaxonomyNode, type?: string): number => {
-      let count = 0;
-      if (!type || n.type === type) {
-        count = 1;
-      }
-      if (n.children) {
-        n.children.forEach(child => {
-          count += getChildCount(child, type);
-        });
-      }
-      return count;
-    };
+  // Helper function to get all children recursively
+  const getAllChildren = (node: TaxonomyNode): TaxonomyNode[] => {
+    let children: TaxonomyNode[] = [];
+    if (node.children) {
+      node.children.forEach(child => {
+        children.push(child);
+        children = children.concat(getAllChildren(child));
+      });
+    }
+    return children;
+  };
 
-    const clusters = node.type === 'cluster' ? 1 : getChildCount(node, 'cluster');
-    const groups = node.type === 'group' ? 1 : getChildCount(node, 'group');
-    const skills = node.type === 'skill' ? 1 : getChildCount(node, 'skill');
-    const totalUsers = node.usageCount || 0;
+  const getImpactAnalysis = (node: TaxonomyNode) => {
+    const allChildren = getAllChildren(node);
+    
+    const clusters = node.type === 'cluster' ? 1 : allChildren.filter(child => child.type === 'cluster').length;
+    const groups = node.type === 'group' ? 1 : allChildren.filter(child => child.type === 'group').length;
+    const skills = node.type === 'skill' ? 1 : allChildren.filter(child => child.type === 'skill').length;
+    
+    // Calculate total usage across all children
+    let totalUsers = node.usageCount || 0;
+    allChildren.forEach(child => {
+      totalUsers += child.usageCount || 0;
+    });
+    
     const courses = Math.floor(totalUsers * 0.3); // Simulated course impact
 
-    return { clusters, groups, skills, totalUsers, courses };
+    return { clusters, groups, skills, totalUsers, courses, childrenCount: allChildren.length };
   };
 
   const handleInactivateClick = (node: TaxonomyNode) => {
@@ -208,6 +215,11 @@ export const TaxonomyTree: React.FC<TaxonomyTreeProps> = ({
                       <div>• {impact.totalUsers} Users affected</div>
                       <div>• {impact.courses} Courses impacted</div>
                     </div>
+                    {impact.childrenCount > 0 && (
+                      <p className="text-sm font-medium text-orange-600 mt-2">
+                        Warning: This will also inactivate {impact.childrenCount} child item{impact.childrenCount > 1 ? 's' : ''}.
+                      </p>
+                    )}
                   </div>
                 </AlertDescription>
               </Alert>
