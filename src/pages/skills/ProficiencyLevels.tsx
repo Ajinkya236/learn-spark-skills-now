@@ -5,35 +5,31 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Upload, Edit, Trash2 } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { GlobalLevelsTable } from "@/components/proficiency/GlobalLevelsTable";
 import { SkillMappingsTable } from "@/components/proficiency/SkillMappingsTable";
 import { EditLevelDialog } from "@/components/proficiency/EditLevelDialog";
 import { ImportDialog } from "@/components/proficiency/ImportDialog";
 import { SkillMappingForm } from "@/components/proficiency/SkillMappingForm";
 
+// Updated interfaces to match component expectations
 interface ProficiencyLevel {
   id: string;
-  name: string;
+  order: number;
+  title: string;
   description: string;
-  level: number;
-  isActive: boolean;
 }
 
-interface SkillMapping {
+interface SkillProficiencyMapping {
   id: string;
-  skillName: string;
+  skill: string;
+  proficiencyDescription: string;
+  proficiencyLevel: string;
   cluster: string;
   group: string;
-  proficiencyLevels: string[];
+  isActive: boolean;
 }
 
 const ProficiencyLevels = () => {
@@ -43,55 +39,58 @@ const ProficiencyLevels = () => {
   const [showAddLevelDialog, setShowAddLevelDialog] = useState(false);
   const [showSkillMappingForm, setShowSkillMappingForm] = useState(false);
 
-  // Mock data for global proficiency levels
+  // Updated mock data with correct structure
   const [globalLevels, setGlobalLevels] = useState<ProficiencyLevel[]>([
     {
       id: '1',
-      name: 'Beginner',
-      description: 'Basic understanding and limited experience',
-      level: 1,
+      order: 1,
+      title: 'Beginner',
+      description: 'Basic understanding and limited experience'
+    },
+    {
+      id: '2',
+      order: 2,
+      title: 'Intermediate',
+      description: 'Good understanding with some practical experience'
+    },
+    {
+      id: '3',
+      order: 3,
+      title: 'Advanced',
+      description: 'Strong expertise with extensive experience'
+    },
+    {
+      id: '4',
+      order: 4,
+      title: 'Expert',
+      description: 'Deep expertise and thought leadership'
+    }
+  ]);
+
+  // Updated mock data for skill mappings
+  const [skillMappings, setSkillMappings] = useState<SkillProficiencyMapping[]>([
+    {
+      id: '1',
+      skill: 'React',
+      proficiencyDescription: 'Component development and hooks',
+      proficiencyLevel: 'Intermediate',
+      cluster: 'Programming',
+      group: 'Frontend Development',
       isActive: true
     },
     {
       id: '2',
-      name: 'Intermediate',
-      description: 'Good understanding with some practical experience',
-      level: 2,
-      isActive: true
-    },
-    {
-      id: '3',
-      name: 'Advanced',
-      description: 'Strong expertise with extensive experience',
-      level: 3,
-      isActive: true
-    },
-    {
-      id: '4',
-      name: 'Expert',
-      description: 'Deep expertise and thought leadership',
-      level: 4,
+      skill: 'Node.js',
+      proficiencyDescription: 'Server-side JavaScript development',
+      proficiencyLevel: 'Advanced',
+      cluster: 'Programming',
+      group: 'Backend Development',
       isActive: true
     }
   ]);
 
-  // Mock data for skill mappings
-  const [skillMappings, setSkillMappings] = useState<SkillMapping[]>([
-    {
-      id: '1',
-      skillName: 'React',
-      cluster: 'Programming',
-      group: 'Frontend Development',
-      proficiencyLevels: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
-    },
-    {
-      id: '2',
-      skillName: 'Node.js',
-      cluster: 'Programming',
-      group: 'Backend Development',
-      proficiencyLevels: ['Beginner', 'Intermediate', 'Advanced']
-    }
-  ]);
+  // Mock skills data
+  const skills = ['JavaScript', 'React', 'Node.js', 'Python', 'TypeScript', 'Vue.js', 'Angular'];
 
   const handleEditLevel = (level: ProficiencyLevel) => {
     setEditingLevel(level);
@@ -102,18 +101,20 @@ const ProficiencyLevels = () => {
     toast.success("Proficiency level deleted successfully");
   };
 
-  const handleSaveLevel = (levelData: Omit<ProficiencyLevel, 'id'>) => {
+  const handleSaveLevel = (updates: Partial<ProficiencyLevel>) => {
     if (editingLevel) {
       setGlobalLevels(prev => prev.map(level => 
         level.id === editingLevel.id 
-          ? { ...level, ...levelData }
+          ? { ...level, ...updates }
           : level
       ));
       toast.success("Proficiency level updated successfully");
     } else {
       const newLevel: ProficiencyLevel = {
-        ...levelData,
-        id: Date.now().toString()
+        id: Date.now().toString(),
+        order: globalLevels.length + 1,
+        title: updates.title || '',
+        description: updates.description || ''
       };
       setGlobalLevels(prev => [...prev, newLevel]);
       toast.success("Proficiency level created successfully");
@@ -122,27 +123,48 @@ const ProficiencyLevels = () => {
     setShowAddLevelDialog(false);
   };
 
-  const handleAddSkillMapping = (mapping: Omit<SkillMapping, 'id'>) => {
-    const newMapping: SkillMapping = {
-      ...mapping,
-      id: Date.now().toString()
-    };
-    setSkillMappings(prev => [...prev, newMapping]);
-    toast.success("Skill mapping added successfully");
+  const handleAddSkillMapping = (mappings: Array<{ skill: string; proficiencyId: string }>) => {
+    const newMappings = mappings.map(mapping => {
+      const proficiencyLevel = globalLevels.find(level => level.id === mapping.proficiencyId);
+      return {
+        id: Date.now().toString() + Math.random(),
+        skill: mapping.skill,
+        proficiencyDescription: `${mapping.skill} proficiency`,
+        proficiencyLevel: proficiencyLevel?.title || 'Beginner',
+        cluster: 'General',
+        group: 'Technical',
+        isActive: true
+      };
+    });
+    
+    setSkillMappings(prev => [...prev, ...newMappings]);
+    toast.success("Skill mappings added successfully");
     setShowSkillMappingForm(false);
   };
 
-  const handleDeleteSkillMapping = (id: string) => {
+  const handleEditSkillMapping = (id: string, updatedMapping: Omit<SkillProficiencyMapping, 'id' | 'isActive'>) => {
+    setSkillMappings(prev => prev.map(mapping =>
+      mapping.id === id ? { ...mapping, ...updatedMapping } : mapping
+    ));
+    toast.success("Skill mapping updated successfully");
+  };
+
+  const handleInactivateSkillMapping = (id: string) => {
     setSkillMappings(prev => prev.filter(mapping => mapping.id !== id));
     toast.success("Skill mapping deleted successfully");
   };
 
+  const handleImport = (data: any) => {
+    toast.success("Data imported successfully");
+    setShowImportDialog(false);
+  };
+
   const stats = {
     totalLevels: globalLevels.length,
-    activeLevels: globalLevels.filter(l => l.isActive).length,
-    totalMappings: skillMappings.length,
+    activeLevels: globalLevels.length,
+    totalMappings: skillMappings.filter(m => m.isActive).length,
     avgLevelsPerSkill: skillMappings.length > 0 
-      ? (skillMappings.reduce((sum, s) => sum + s.proficiencyLevels.length, 0) / skillMappings.length).toFixed(1)
+      ? (skillMappings.length / new Set(skillMappings.map(s => s.skill)).size).toFixed(1)
       : '0'
   };
 
@@ -237,7 +259,6 @@ const ProficiencyLevels = () => {
                     <GlobalLevelsTable
                       levels={globalLevels}
                       onEdit={handleEditLevel}
-                      onDelete={handleDeleteLevel}
                     />
                   </TabsContent>
 
@@ -257,7 +278,8 @@ const ProficiencyLevels = () => {
                     
                     <SkillMappingsTable
                       mappings={skillMappings}
-                      onDelete={handleDeleteSkillMapping}
+                      onEdit={handleEditSkillMapping}
+                      onInactivate={handleInactivateSkillMapping}
                     />
                   </TabsContent>
                 </Tabs>
@@ -281,6 +303,7 @@ const ProficiencyLevels = () => {
             <ImportDialog
               open={showImportDialog}
               onOpenChange={setShowImportDialog}
+              onImport={handleImport}
             />
 
             {/* Skill Mapping Form */}
@@ -288,7 +311,8 @@ const ProficiencyLevels = () => {
               open={showSkillMappingForm}
               onOpenChange={setShowSkillMappingForm}
               onSave={handleAddSkillMapping}
-              availableLevels={globalLevels}
+              skills={skills}
+              proficiencyLevels={globalLevels}
             />
           </div>
         </SidebarInset>

@@ -2,14 +2,14 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 
 interface ProficiencyLevel {
   id: string;
-  name: string;
+  order: number;
+  title: string;
   description: string;
 }
 
@@ -18,7 +18,7 @@ interface SkillMappingFormProps {
   onOpenChange: (open: boolean) => void;
   skills: string[];
   proficiencyLevels: ProficiencyLevel[];
-  onSave: (data: any) => void;
+  onSave: (mappings: Array<{ skill: string; proficiencyId: string }>) => void;
 }
 
 export const SkillMappingForm: React.FC<SkillMappingFormProps> = ({
@@ -49,7 +49,7 @@ export const SkillMappingForm: React.FC<SkillMappingFormProps> = ({
   const handleSave = () => {
     const mappings = selectedSkills.map(skill => ({
       skill,
-      proficiencyId: proficiencyMappings[skill] || proficiencyLevels[0]?.id
+      proficiencyId: proficiencyMappings[skill] || proficiencyLevels[0]?.id || ''
     }));
     onSave(mappings);
     onOpenChange(false);
@@ -101,7 +101,7 @@ export const SkillMappingForm: React.FC<SkillMappingFormProps> = ({
                       <SelectContent>
                         {proficiencyLevels.map(level => (
                           <SelectItem key={level.id} value={level.id}>
-                            {level.name}
+                            {level.title}
                           </SelectItem>
                         ))}
                       </SelectContent>
