@@ -1,18 +1,19 @@
 
+import React, { useState } from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Settings } from "lucide-react";
+import { Plus, FileText, Upload } from "lucide-react";
+import { BackButton } from "@/components/BackButton";
 import { GlobalLevelsTable } from "@/components/proficiency/GlobalLevelsTable";
-import { SkillMappingsTable } from "@/components/proficiency/SkillMappingsTable";
 import { EditLevelDialog } from "@/components/proficiency/EditLevelDialog";
 import { ImportDialog } from "@/components/proficiency/ImportDialog";
 import { SkillMappingForm } from "@/components/proficiency/SkillMappingForm";
+import { SkillMappingsTable } from "@/components/proficiency/SkillMappingsTable";
 import { useProficiencyLevels } from "@/hooks/useProficiencyLevels";
-import { useState } from "react";
 
 const ProficiencyLevels = () => {
   const {
@@ -28,14 +29,32 @@ const ProficiencyLevels = () => {
   } = useProficiencyLevels();
 
   const [editingLevel, setEditingLevel] = useState(null);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showMappingForm, setShowMappingForm] = useState(false);
 
-  const handleSaveMapping = (data) => {
-    const success = createSkillMapping(data);
-    if (success) {
-      setIsFormOpen(false);
+  const activeSkillMappings = skillMappings.filter(mapping => mapping.isActive);
+
+  const statsData = [
+    {
+      title: "Global Proficiency Levels",
+      value: proficiencyLevels.length,
+      description: "Total levels defined",
+      icon: FileText,
+      color: "bg-blue-500"
+    },
+    {
+      title: "Active Skill Mappings", 
+      value: activeSkillMappings.length,
+      description: "Skills with proficiency descriptions",
+      icon: Plus,
+      color: "bg-green-500"
     }
+  ];
+
+  const handleImport = (file: File) => {
+    // Mock import functionality
+    console.log('Importing file:', file.name);
+    setShowImportDialog(false);
   };
 
   return (
@@ -44,95 +63,90 @@ const ProficiencyLevels = () => {
         <AppSidebar />
         <SidebarInset>
           <div className="flex-1 space-y-6 p-4 md:p-6">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Proficiency Levels</h1>
-              <p className="text-muted-foreground">Manage global proficiency levels and skill mappings</p>
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <BackButton />
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                    Proficiency Levels
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Manage global proficiency levels and skill-specific proficiency descriptions
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary">{proficiencyLevels.length}</Badge>
-                    <span className="text-sm font-medium">Global Levels</span>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary">{skillMappings.filter(m => m.isActive).length}</Badge>
-                    <span className="text-sm font-medium">Active Mappings</span>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary">{skills.length}</Badge>
-                    <span className="text-sm font-medium">Available Skills</span>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {statsData.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Card key={index}>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-muted-foreground">
+                            {stat.title}
+                          </p>
+                          <p className="text-2xl font-bold">{stat.value}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {stat.description}
+                          </p>
+                        </div>
+                        <div className={`p-3 rounded-lg ${stat.color} text-white`}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
             {/* Global Proficiency Levels */}
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Global Proficiency Levels</CardTitle>
-                    <CardDescription>
-                      Define and manage proficiency levels used across the organization
-                    </CardDescription>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsImportDialogOpen(true)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Import
-                    </Button>
-                  </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div>
+                  <CardTitle>Global Proficiency Levels</CardTitle>
+                  <CardDescription>
+                    Define organization-wide proficiency levels with descriptions
+                  </CardDescription>
                 </div>
+                <Button onClick={() => setShowImportDialog(true)} variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import
+                </Button>
               </CardHeader>
               <CardContent>
                 <GlobalLevelsTable
                   levels={proficiencyLevels}
                   onEdit={setEditingLevel}
-                  onUpdate={updateProficiencyLevel}
                 />
               </CardContent>
             </Card>
 
             {/* Skill Proficiency Mappings */}
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Skill Proficiency Mappings</CardTitle>
-                    <CardDescription>
-                      Map skills to specific proficiency descriptions and organize by clusters
-                    </CardDescription>
-                  </div>
-                  <Button 
-                    onClick={() => setIsFormOpen(true)}
-                    size="sm"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Mapping
-                  </Button>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div>
+                  <CardTitle>Skill Proficiency Mappings</CardTitle>
+                  <CardDescription>
+                    Define skill-specific proficiency descriptions
+                  </CardDescription>
                 </div>
+                <Button onClick={() => setShowMappingForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Skill Mapping
+                </Button>
               </CardHeader>
               <CardContent>
                 <SkillMappingsTable
-                  mappings={skillMappings.filter(m => m.isActive)}
-                  onEdit={updateSkillMapping}
+                  mappings={activeSkillMappings}
+                  onEdit={(mapping) => {
+                    // Handle edit logic here
+                  }}
                   onInactivate={inactivateSkillMapping}
                 />
               </CardContent>
@@ -143,22 +157,31 @@ const ProficiencyLevels = () => {
               level={editingLevel}
               open={!!editingLevel}
               onOpenChange={(open) => !open && setEditingLevel(null)}
-              onSave={updateProficiencyLevel}
+              onSave={(updates) => {
+                if (editingLevel) {
+                  updateProficiencyLevel(editingLevel.id, updates);
+                  setEditingLevel(null);
+                }
+              }}
             />
 
             <ImportDialog
-              open={isImportDialogOpen}
-              onOpenChange={setIsImportDialogOpen}
+              open={showImportDialog}
+              onOpenChange={setShowImportDialog}
+              onImport={handleImport}
             />
 
             <SkillMappingForm
-              open={isFormOpen}
-              onOpenChange={setIsFormOpen}
+              open={showMappingForm}
+              onOpenChange={setShowMappingForm}
               skills={skills}
               proficiencyLevels={proficiencyLevels}
-              clusters={clusters}
-              groups={groups}
-              onSave={handleSaveMapping}
+              onSave={(data) => {
+                const success = createSkillMapping(data);
+                if (success) {
+                  setShowMappingForm(false);
+                }
+              }}
             />
           </div>
         </SidebarInset>
