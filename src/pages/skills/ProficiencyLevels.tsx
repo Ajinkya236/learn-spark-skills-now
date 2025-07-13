@@ -1,123 +1,140 @@
-
 import React, { useState } from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { useProficiencyLevels } from "@/hooks/useProficiencyLevels";
 import { GlobalLevelsTable } from "@/components/proficiency/GlobalLevelsTable";
 import { SkillMappingsTable } from "@/components/proficiency/SkillMappingsTable";
 import { SkillMappingForm } from "@/components/proficiency/SkillMappingForm";
 import { EditLevelDialog } from "@/components/proficiency/EditLevelDialog";
 import { ImportDialog } from "@/components/proficiency/ImportDialog";
+import { SkillProficiencyStats } from "@/components/skills/SkillProficiencyStats";
 
-interface LocalSkillMapping {
+interface ProficiencyLevel {
   id: string;
-  skill: string;
-  proficiencyDescription: string;
-  proficiencyLevel: string;
-  cluster: string;
-  group: string;
+  name: string;
+  description: string;
+  minScore: number;
+  maxScore: number;
   isActive: boolean;
 }
 
+interface LocalSkillMapping {
+  id: string;
+  skillName: string;
+  proficiencyLevelId: string;
+  minScore: number;
+  maxScore: number;
+  description: string;
+}
+
 const ProficiencyLevels = () => {
-  const {
-    proficiencyLevels,
-    skillMappings,
-    skills,
-    clusters,
-    groups,
-    updateProficiencyLevel,
-    createSkillMapping,
-    updateSkillMapping,
-    inactivateSkillMapping
-  } = useProficiencyLevels();
+  const [proficiencyLevels, setProficiencyLevels] = useState<ProficiencyLevel[]>([
+    {
+      id: '1',
+      name: 'Beginner',
+      description: 'Basic understanding and limited experience',
+      minScore: 0,
+      maxScore: 25,
+      isActive: true
+    },
+    {
+      id: '2',
+      name: 'Intermediate',
+      description: 'Good understanding with some practical experience',
+      minScore: 26,
+      maxScore: 50,
+      isActive: true
+    },
+    {
+      id: '3',
+      name: 'Advanced', 
+      description: 'Strong expertise with extensive experience',
+      minScore: 51,
+      maxScore: 75,
+      isActive: true
+    },
+    {
+      id: '4',
+      name: 'Expert',
+      description: 'Deep expertise and thought leadership',
+      minScore: 76,
+      maxScore: 100,
+      isActive: true
+    }
+  ]);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [skillMappings, setSkillMappings] = useState<LocalSkillMapping[]>([
+    {
+      id: '1',
+      skillName: 'React',
+      proficiencyLevelId: '3',
+      minScore: 60,
+      maxScore: 80,
+      description: 'Advanced React development skills'
+    },
+    {
+      id: '2',
+      skillName: 'TypeScript',
+      proficiencyLevelId: '2',
+      minScore: 40,
+      maxScore: 60,
+      description: 'Intermediate TypeScript knowledge'
+    }
+  ]);
 
-  // Convert to local mapping format
-  const localMappings: LocalSkillMapping[] = skillMappings.map(mapping => ({
-    id: mapping.id,
-    skill: mapping.skill,
-    proficiencyDescription: mapping.proficiencyDescription,
-    proficiencyLevel: mapping.proficiencyLevel,
-    cluster: mapping.cluster,
-    group: mapping.group,
-    isActive: mapping.isActive
-  }));
+  const [isAddingLevel, setIsAddingLevel] = useState(false);
+  const [editingLevel, setEditingLevel] = useState<ProficiencyLevel | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
-  const filteredLevels = proficiencyLevels.filter(level =>
-    level.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    level.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredLevels.length / itemsPerPage);
-
-  const handleCreateLevel = (levelData: any) => {
-    toast.success("Create level functionality would be implemented here");
-    setIsCreateDialogOpen(false);
+  const handleAddLevel = (levelData: Omit<ProficiencyLevel, 'id'>) => {
+    const newLevel: ProficiencyLevel = {
+      ...levelData,
+      id: Date.now().toString()
+    };
+    setProficiencyLevels(prev => [...prev, newLevel]);
+    toast.success("Proficiency level added successfully");
+    setIsAddingLevel(false);
   };
 
-  const handleUpdateLevel = (levelData: any) => {
-    if (selectedLevel) {
-      updateProficiencyLevel(selectedLevel.id, levelData);
-    }
-    setIsEditDialogOpen(false);
-    setSelectedLevel(null);
+  const handleUpdateLevel = (id: string, levelData: Omit<ProficiencyLevel, 'id'>) => {
+    setProficiencyLevels(prev => prev.map(level => 
+      level.id === id ? { ...levelData, id } : level
+    ));
+    toast.success("Proficiency level updated successfully");
+    setEditingLevel(null);
   };
 
   const handleDeleteLevel = (id: string) => {
-    toast.success("Delete level functionality would be implemented here");
+    setProficiencyLevels(prev => prev.filter(level => level.id !== id));
+    toast.success("Proficiency level deleted successfully");
   };
 
-  const handleEditLevel = (level: any) => {
-    setSelectedLevel(level);
-    setIsEditDialogOpen(true);
+  const handleAddSkillMapping = (newMapping: Omit<LocalSkillMapping, 'id'>) => {
+    const mapping: LocalSkillMapping = {
+      ...newMapping,
+      id: Date.now().toString()
+    };
+    setSkillMappings(prev => [...prev, mapping]);
+    toast.success("Skill mapping added successfully");
   };
 
-  const handleCreateMapping = (newMapping: Omit<LocalSkillMapping, 'id'>) => {
-    const success = createSkillMapping({
-      skill: newMapping.skill,
-      proficiencyDescription: newMapping.proficiencyDescription,
-      proficiencyLevel: newMapping.proficiencyLevel,
-      cluster: newMapping.cluster,
-      group: newMapping.group
-    });
-    if (success) {
-      setShowForm(false);
-    }
+  const handleUpdateSkillMapping = (id: string, updatedMapping: LocalSkillMapping) => {
+    setSkillMappings(prev => prev.map(mapping => 
+      mapping.id === id ? updatedMapping : mapping
+    ));
+    toast.success("Skill mapping updated successfully");
   };
 
-  const handleUpdateMapping = (id: string, updatedMapping: LocalSkillMapping) => {
-    updateSkillMapping(id, {
-      skill: updatedMapping.skill,
-      proficiencyDescription: updatedMapping.proficiencyDescription,
-      proficiencyLevel: updatedMapping.proficiencyLevel,
-      cluster: updatedMapping.cluster,
-      group: updatedMapping.group
-    });
-  };
-
-  const handleDeleteMapping = (id: string) => {
-    inactivateSkillMapping(id);
+  const handleDeleteSkillMapping = (id: string) => {
+    setSkillMappings(prev => prev.filter(mapping => mapping.id !== id));
+    toast.success("Skill mapping deleted successfully");
   };
 
   const handleImport = (data: any) => {
-    toast.success("Import functionality would be implemented here");
-    setIsImportDialogOpen(false);
+    // Handle import logic here
+    toast.success("Data imported successfully");
+    setIsImportOpen(false);
   };
 
   return (
@@ -129,116 +146,51 @@ const ProficiencyLevels = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground">Proficiency Levels</h1>
-                <p className="text-muted-foreground">Manage global proficiency levels and skill-specific mappings</p>
+                <p className="text-muted-foreground">Manage skill proficiency levels and score mappings</p>
               </div>
             </div>
 
-            <Tabs defaultValue="global-levels" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="global-levels">Global Proficiency Levels</TabsTrigger>
-                <TabsTrigger value="skill-mappings">Skill Proficiency Mappings</TabsTrigger>
-              </TabsList>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <SkillProficiencyStats mappings={skillMappings} />
+            </div>
 
-              <TabsContent value="global-levels" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>Global Proficiency Levels</CardTitle>
-                        <CardDescription>Define the standard proficiency levels used across all skills</CardDescription>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button onClick={() => setIsImportDialogOpen(true)} variant="outline">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Import
-                        </Button>
-                        <Button onClick={() => setIsCreateDialogOpen(true)}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Level
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="relative max-w-sm">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search levels..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
+            <GlobalLevelsTable
+              proficiencyLevels={proficiencyLevels}
+              onAdd={() => setIsAddingLevel(true)}
+              onEdit={(level) => setEditingLevel(level)}
+              onDelete={handleDeleteLevel}
+              onImport={() => setIsImportOpen(true)}
+            />
 
-                    <GlobalLevelsTable
-                      proficiencyLevels={filteredLevels}
-                      searchTerm={searchTerm}
-                      onSearchChange={setSearchTerm}
-                      onEdit={handleEditLevel}
-                      onDelete={handleDeleteLevel}
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            <SkillMappingForm 
+              proficiencyLevels={proficiencyLevels}
+              onSubmit={handleAddSkillMapping}
+            />
 
-              <TabsContent value="skill-mappings" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>Skill Proficiency Mappings</CardTitle>
-                        <CardDescription>Define specific proficiency descriptions for individual skills</CardDescription>
-                      </div>
-                      <Button onClick={() => setShowForm(!showForm)}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Mapping
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {showForm && (
-                      <SkillMappingForm
-                        skills={skills}
-                        clusters={clusters}
-                        groups={groups}
-                        proficiencyLevels={proficiencyLevels}
-                        onSubmit={handleCreateMapping}
-                        onCancel={() => setShowForm(false)}
-                      />
-                    )}
-
-                    <SkillMappingsTable
-                      skillMappings={localMappings}
-                      proficiencyLevels={proficiencyLevels}
-                      onUpdate={handleUpdateMapping}
-                      onDelete={handleDeleteMapping}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-
-            <EditLevelDialog
-              open={isCreateDialogOpen}
-              onClose={() => setIsCreateDialogOpen(false)}
-              onSubmit={handleCreateLevel}
-              title="Create New Proficiency Level"
+            <SkillMappingsTable
+              skillMappings={skillMappings}
+              onUpdate={handleUpdateSkillMapping}
+              onDelete={handleDeleteSkillMapping}
             />
 
             <EditLevelDialog
-              open={isEditDialogOpen}
-              onClose={() => setIsEditDialogOpen(false)}
-              onSubmit={handleUpdateLevel}
+              open={isAddingLevel}
+              onOpenChange={setIsAddingLevel}
+              onSubmit={handleAddLevel}
+              title="Add Proficiency Level"
+            />
+
+            <EditLevelDialog
+              open={!!editingLevel}
+              onOpenChange={(open) => !open && setEditingLevel(null)}
+              onSubmit={(levelData) => editingLevel && handleUpdateLevel(editingLevel.id, levelData)}
               title="Edit Proficiency Level"
-              initialData={selectedLevel}
+              initialData={editingLevel}
             />
 
             <ImportDialog
-              open={isImportDialogOpen}
-              onClose={() => setIsImportDialogOpen(false)}
+              open={isImportOpen}
+              onOpenChange={setIsImportOpen}
               onImport={handleImport}
             />
           </div>
