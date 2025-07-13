@@ -566,14 +566,14 @@ const TaxonomyManagement = () => {
             <BulkImportDialog 
               open={bulkImportOpen} 
               onOpenChange={setBulkImportOpen} 
-              onImportComplete={handleBulkImportComplete} 
+              onImportComplete={() => handleBulkImportComplete} 
             />
 
             <MergeDialog 
               open={mergeDialogOpen} 
               onOpenChange={setMergeDialogOpen} 
               nodes={taxonomyData} 
-              onMergeComplete={handleMergeComplete} 
+              onMergeComplete={() => handleMergeComplete} 
             />
           </div>
         </SidebarInset>
