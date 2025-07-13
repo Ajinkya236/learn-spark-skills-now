@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -35,43 +35,37 @@ const InactiveBin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
-  const [inactiveItems, setInactiveItems] = useState<InactiveItem[]>([
-    {
-      id: '1',
-      name: 'Old JavaScript Framework',
-      description: 'Legacy framework no longer in use',
-      type: 'skill',
-      parentName: 'Frontend Development',
-      inactivatedAt: new Date('2024-01-15'),
-      inactivatedBy: 'Admin User',
-      employeeCount: 15,
-      courseCount: 3,
-      roleCount: 2
-    },
-    {
-      id: '2',
-      name: 'Deprecated Tools',
-      description: 'Old development tools cluster',
-      type: 'cluster',
-      inactivatedAt: new Date('2024-02-20'),
-      inactivatedBy: 'System Admin',
-      employeeCount: 8,
-      courseCount: 1,
-      roleCount: 1
-    },
-    {
-      id: '3',
-      name: 'Legacy Database',
-      description: 'Old database technology group',
-      type: 'group',
-      parentName: 'Data Management',
-      inactivatedAt: new Date('2024-03-10'),
-      inactivatedBy: 'Tech Lead',
-      employeeCount: 22,
-      courseCount: 5,
-      roleCount: 4
-    }
-  ]);
+  const [inactiveItems, setInactiveItems] = useState<InactiveItem[]>([]);
+
+  // Load inactive items from global state or localStorage
+  useEffect(() => {
+    // In real app, this would fetch from API
+    const loadInactiveItems = () => {
+      try {
+        const stored = localStorage.getItem('inactiveItems');
+        if (stored) {
+          const items = JSON.parse(stored).map((item: any) => ({
+            ...item,
+            inactivatedAt: new Date(item.inactivatedAt)
+          }));
+          setInactiveItems(items);
+        }
+      } catch (error) {
+        console.error('Error loading inactive items:', error);
+      }
+    };
+
+    loadInactiveItems();
+    
+    // Refresh every few seconds to catch updates from other pages
+    const interval = setInterval(loadInactiveItems, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Save inactive items to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('inactiveItems', JSON.stringify(inactiveItems));
+  }, [inactiveItems]);
 
   const typeOptions = [
     { value: 'all', label: 'All', count: inactiveItems.length },
@@ -125,9 +119,46 @@ const InactiveBin = () => {
     // Remove from inactive items
     setInactiveItems(prev => prev.filter(i => i.id !== item.id));
     
+    // If it's a proficiency, add it back to proficiency mappings
+    if (item.type === 'proficiency') {
+      // In real app, this would call API to restore proficiency
+      const restoredProficiency = {
+        id: item.id,
+        skillId: 'sample-skill-id',
+        skillName: 'Sample Skill',
+        proficiencyDescription: item.description || item.name,
+        proficiencyLevelId: 'sample-level-id',
+        proficiencyLevelTitle: 'Intermediate',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isActive: true
+      };
+      
+      // Store in localStorage for ProficiencyLevels page to pick up
+      const storedProficiencies = localStorage.getItem('proficiencyMappings');
+      let proficiencies = storedProficiencies ? JSON.parse(storedProficiencies) : [];
+      proficiencies.push(restoredProficiency);
+      localStorage.setItem('proficiencyMappings', JSON.stringify(proficiencies));
+    } else {
+      // For taxonomy items, store restoration signal
+      const restorationSignal = {
+        type: 'restore',
+        item: {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          type: item.type,
+          isActive: true,
+          updatedAt: new Date()
+        },
+        timestamp: Date.now()
+      };
+      localStorage.setItem('taxonomyRestoration', JSON.stringify(restorationSignal));
+    }
+    
     toast({
       title: "Item Restored",
-      description: `${item.type} "${item.name}" has been restored and removed from the Inactive Bin. It will now appear in the active taxonomy.`
+      description: `${item.type} "${item.name}" has been restored and will appear in the appropriate active section.`
     });
   };
 

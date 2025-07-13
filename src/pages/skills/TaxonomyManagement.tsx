@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Plus, Upload, Download, Settings, Trash2, Edit, Merge, RotateCcw, Users, BookOpen, Search } from "lucide-react";
+import { Plus, Upload, Download, Settings, Trash2, Edit, Merge, RotateCcw, Users, BookOpen, Search, Archive } from "lucide-react";
 import { TaxonomyTree } from "@/components/taxonomy/TaxonomyTree";
 import { CreateNodeDialog } from "@/components/taxonomy/CreateNodeDialog";
 import { EditNodeDialog } from "@/components/taxonomy/EditNodeDialog";
@@ -48,6 +48,9 @@ export interface ProficiencyLevel {
   maxScore: number;
   order: number;
 }
+
+// Global state for inactive items (in real app, this would be in state management)
+let globalInactiveItems: any[] = [];
 
 const ITEMS_PER_PAGE = 10;
 
@@ -158,7 +161,15 @@ const TaxonomyManagement = () => {
   };
 
   const getTableData = () => {
-    const result: Array<{cluster: string, group: string, skill: string, clusterId?: string, groupId?: string, skillId?: string}> = [];
+    const result: Array<{
+      cluster: string, 
+      group: string, 
+      skill: string, 
+      clusterId?: string, 
+      groupId?: string, 
+      skillId?: string,
+      node?: TaxonomyNode
+    }> = [];
     
     const traverse = (nodes: TaxonomyNode[], clusterName = '', groupName = '', clusterId?: string, groupId?: string) => {
       nodes.forEach(node => {
@@ -175,7 +186,8 @@ const TaxonomyManagement = () => {
             skill: node.name,
             clusterId,
             groupId,
-            skillId: node.id
+            skillId: node.id,
+            node
           });
         }
       });
@@ -206,6 +218,18 @@ const TaxonomyManagement = () => {
   const tableStartIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const tablePaginatedData = filteredTableData.slice(tableStartIndex, tableStartIndex + ITEMS_PER_PAGE);
 
+  // Find node by ID helper
+  const findNodeById = (nodes: TaxonomyNode[], id: string): TaxonomyNode | null => {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children) {
+        const found = findNodeById(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   const handleCreateNode = (type: 'cluster' | 'group' | 'skill') => {
     setSelectedNodeType(type);
     setCreateDialogOpen(true);
@@ -214,6 +238,21 @@ const TaxonomyManagement = () => {
   const handleEditNode = (node: TaxonomyNode) => {
     setSelectedNode(node);
     setEditDialogOpen(true);
+  };
+
+  const handleEditFromTable = (nodeId: string) => {
+    const node = findNodeById(taxonomyData, nodeId);
+    if (node) {
+      setSelectedNode(node);
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleInactivateFromTable = (nodeId: string) => {
+    const node = findNodeById(taxonomyData, nodeId);
+    if (node) {
+      handleInactivateNode(node);
+    }
   };
 
   const handleNodeCreated = (nodeData: Partial<TaxonomyNode>) => {
@@ -280,6 +319,22 @@ const TaxonomyManagement = () => {
   };
 
   const handleInactivateNode = (node: TaxonomyNode) => {
+    // Add to global inactive items
+    const inactiveItem = {
+      id: node.id,
+      name: node.name,
+      description: node.description,
+      type: node.type,
+      parentName: node.parentId ? findNodeById(taxonomyData, node.parentId)?.name : undefined,
+      inactivatedAt: new Date(),
+      inactivatedBy: 'Current User',
+      employeeCount: node.employeeCount || 0,
+      courseCount: node.courseCount || 0,
+      roleCount: node.roleCount || 0
+    };
+    
+    globalInactiveItems.push(inactiveItem);
+
     const updateTaxonomy = (nodes: TaxonomyNode[]): TaxonomyNode[] => {
       return nodes.map(n => {
         if (n.id === node.id) {
@@ -359,7 +414,7 @@ const TaxonomyManagement = () => {
               <div className="flex flex-wrap gap-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate('/skills/taxonomy/inactive')}
+                  onClick={() => navigate('/skills/inactive-bin')}
                   className="font-inter"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
@@ -390,33 +445,29 @@ const TaxonomyManagement = () => {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <Button 
-                    variant="outline" 
                     onClick={() => handleCreateNode('cluster')} 
-                    className="justify-start font-inter"
+                    className="justify-start font-inter bg-jio-blue hover:bg-jio-blue/90 text-jio-white"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Cluster
                   </Button>
                   <Button 
-                    variant="outline" 
                     onClick={() => handleCreateNode('group')} 
-                    className="justify-start font-inter"
+                    className="justify-start font-inter bg-jio-blue hover:bg-jio-blue/90 text-jio-white"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Group
                   </Button>
                   <Button 
-                    variant="outline" 
                     onClick={() => handleCreateNode('skill')} 
-                    className="justify-start font-inter"
+                    className="justify-start font-inter bg-jio-blue hover:bg-jio-blue/90 text-jio-white"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Skill
                   </Button>
                   <Button 
-                    variant="outline" 
                     onClick={() => setMergeDialogOpen(true)} 
-                    className="justify-start font-inter"
+                    className="justify-start font-inter bg-jio-blue hover:bg-jio-blue/90 text-jio-white"
                   >
                     <Merge className="mr-2 h-4 w-4" />
                     Merge Items
@@ -487,12 +538,13 @@ const TaxonomyManagement = () => {
                             <TableHead className="font-inter">Cluster</TableHead>
                             <TableHead className="font-inter">Group</TableHead>
                             <TableHead className="font-inter">Skill</TableHead>
+                            <TableHead className="font-inter">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {tablePaginatedData.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={3} className="text-center py-8 text-muted-foreground font-inter">
+                              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground font-inter">
                                 No data found
                               </TableCell>
                             </TableRow>
@@ -502,6 +554,26 @@ const TaxonomyManagement = () => {
                                 <TableCell className="font-inter">{item.cluster}</TableCell>
                                 <TableCell className="font-inter">{item.group}</TableCell>
                                 <TableCell className="font-inter">{item.skill}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditFromTable(item.skillId!)}
+                                      className="font-inter"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleInactivateFromTable(item.skillId!)}
+                                      className="text-orange-600 hover:text-orange-600 font-inter"
+                                    >
+                                      <Archive className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
                               </TableRow>
                             ))
                           )}
@@ -566,14 +638,14 @@ const TaxonomyManagement = () => {
             <BulkImportDialog 
               open={bulkImportOpen} 
               onOpenChange={setBulkImportOpen} 
-              onImportComplete={() => handleBulkImportComplete} 
+              onImportComplete={handleBulkImportComplete} 
             />
 
             <MergeDialog 
               open={mergeDialogOpen} 
               onOpenChange={setMergeDialogOpen} 
               nodes={taxonomyData} 
-              onMergeComplete={() => handleMergeComplete} 
+              onMergeComplete={handleMergeComplete} 
             />
           </div>
         </SidebarInset>

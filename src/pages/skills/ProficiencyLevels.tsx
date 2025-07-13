@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -86,6 +86,36 @@ const ProficiencyLevels = () => {
     }
   ]);
 
+  // Load proficiency mappings from localStorage on mount
+  useEffect(() => {
+    const loadProficiencies = () => {
+      try {
+        const stored = localStorage.getItem('proficiencyMappings');
+        if (stored) {
+          const mappings = JSON.parse(stored).map((mapping: any) => ({
+            ...mapping,
+            createdAt: new Date(mapping.createdAt),
+            updatedAt: new Date(mapping.updatedAt)
+          }));
+          setProficiencyMappings(mappings);
+        }
+      } catch (error) {
+        console.error('Error loading proficiency mappings:', error);
+      }
+    };
+
+    loadProficiencies();
+    
+    // Refresh periodically to catch restorations
+    const interval = setInterval(loadProficiencies, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Save proficiency mappings to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('proficiencyMappings', JSON.stringify(proficiencyMappings));
+  }, [proficiencyMappings]);
+
   // Mock data for global proficiency levels
   const [globalLevels, setGlobalLevels] = useState<GlobalProficiencyLevel[]>([
     {
@@ -141,6 +171,7 @@ const ProficiencyLevels = () => {
   const paginatedMappings = filteredMappings.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleInactivateProficiency = (mapping: ProficiencyMapping) => {
+    // Update proficiency to inactive
     setProficiencyMappings(prev => 
       prev.map(m => 
         m.id === mapping.id 
@@ -148,6 +179,26 @@ const ProficiencyLevels = () => {
           : m
       )
     );
+
+    // Add to inactive items
+    const inactiveItem = {
+      id: mapping.id,
+      name: mapping.proficiencyDescription,
+      description: `${mapping.skillName} - ${mapping.proficiencyLevelTitle}`,
+      type: 'proficiency',
+      parentName: mapping.skillName,
+      inactivatedAt: new Date(),
+      inactivatedBy: 'Current User',
+      employeeCount: Math.floor(Math.random() * 50) + 10,
+      courseCount: Math.floor(Math.random() * 10) + 1,
+      roleCount: Math.floor(Math.random() * 5) + 1
+    };
+
+    // Add to inactive items in localStorage
+    const storedInactive = localStorage.getItem('inactiveItems');
+    let inactiveItems = storedInactive ? JSON.parse(storedInactive) : [];
+    inactiveItems.push(inactiveItem);
+    localStorage.setItem('inactiveItems', JSON.stringify(inactiveItems));
     
     toast({
       title: "Proficiency Inactivated",
