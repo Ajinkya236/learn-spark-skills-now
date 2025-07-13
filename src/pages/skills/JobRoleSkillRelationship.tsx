@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
@@ -9,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, Settings, Plus, Eye, Pencil, Sparkles, Users, Building, Briefcase } from "lucide-react";
+import { Search, Settings, Eye, Users, Building, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 interface JobRole {
@@ -23,35 +24,7 @@ interface JobRole {
   department: string;
   description: string;
   maxSkills: number;
-  clusters: Cluster[];
-  groups: Group[];
-  skills: JobRoleSkill[];
-}
-
-interface Cluster {
-  id: string;
-  name: string;
-  isAISuggested: boolean;
-  isRequired: boolean;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  clusterId: string;
-  isAISuggested: boolean;
-  isRequired: boolean;
-}
-
-interface JobRoleSkill {
-  id: string;
-  skillName: string;
-  cluster: string;
-  group: string;
-  proficiencyLevel: string;
-  criticalityLevel: 'High' | 'Medium' | 'Low';
-  isAISuggested: boolean;
-  isRequired: boolean;
+  skills: string[];
 }
 
 interface GlobalSettings {
@@ -59,14 +32,13 @@ interface GlobalSettings {
 }
 
 const JobRoleSkillRelationship = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [businessFilter, setBusinessFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedJobRole, setSelectedJobRole] = useState<JobRole | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isDefineSkillsOpen, setIsDefineSkillsOpen] = useState(false);
   const [globalSettings, setGlobalSettings] = useState<GlobalSettings>({ globalMaxSkills: 50 });
 
   // Mock data
@@ -79,36 +51,7 @@ const JobRoleSkillRelationship = () => {
       department: 'Development',
       description: 'Develops and maintains software applications',
       maxSkills: 25,
-      clusters: [
-        { id: '1', name: 'Programming', isAISuggested: true, isRequired: true },
-        { id: '2', name: 'Problem Solving', isAISuggested: false, isRequired: true }
-      ],
-      groups: [
-        { id: '1', name: 'Frontend Development', clusterId: '1', isAISuggested: true, isRequired: true },
-        { id: '2', name: 'Backend Development', clusterId: '1', isAISuggested: false, isRequired: true }
-      ],
-      skills: [
-        {
-          id: '1',
-          skillName: 'React',
-          cluster: 'Programming',
-          group: 'Frontend Development',
-          proficiencyLevel: 'Advanced',
-          criticalityLevel: 'High',
-          isAISuggested: true,
-          isRequired: true
-        },
-        {
-          id: '2',
-          skillName: 'Node.js',
-          cluster: 'Programming',
-          group: 'Backend Development',
-          proficiencyLevel: 'Intermediate',
-          criticalityLevel: 'Medium',
-          isAISuggested: false,
-          isRequired: true
-        }
-      ]
+      skills: ['React', 'Node.js', 'Python', 'JavaScript', 'TypeScript']
     },
     {
       id: '2',
@@ -118,24 +61,7 @@ const JobRoleSkillRelationship = () => {
       department: 'Strategy',
       description: 'Manages product development lifecycle',
       maxSkills: 20,
-      clusters: [
-        { id: '3', name: 'Leadership', isAISuggested: true, isRequired: true }
-      ],
-      groups: [
-        { id: '3', name: 'Strategic Planning', clusterId: '3', isAISuggested: true, isRequired: true }
-      ],
-      skills: [
-        {
-          id: '3',
-          skillName: 'Product Strategy',
-          cluster: 'Leadership',
-          group: 'Strategic Planning',
-          proficiencyLevel: 'Expert',
-          criticalityLevel: 'High',
-          isAISuggested: true,
-          isRequired: true
-        }
-      ]
+      skills: ['Product Strategy', 'Agile', 'Data Analysis']
     }
   ]);
 
@@ -157,19 +83,21 @@ const JobRoleSkillRelationship = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedJobRoles = filteredJobRoles.slice(startIndex, startIndex + itemsPerPage);
 
-  const handleDefineSkills = (jobRole: JobRole) => {
-    setSelectedJobRole(jobRole);
-    setIsDefineSkillsOpen(true);
+  const handleViewEditRole = (jobRole: JobRole) => {
+    navigate(`/skills/job-role-relationship/${jobRole.id}`);
   };
 
   const handleSaveGlobalSettings = () => {
+    // Validate that global max is not less than highest local max
+    const highestLocalMax = Math.max(...jobRoles.map(role => role.maxSkills));
+    
+    if (globalSettings.globalMaxSkills < highestLocalMax) {
+      toast.error(`Global maximum skills cannot be less than the highest local maximum (${highestLocalMax}) for existing roles`);
+      return;
+    }
+
     toast.success("Global settings updated successfully");
     setIsSettingsOpen(false);
-  };
-
-  const handleSaveSkillDefinitions = () => {
-    toast.success("Skill definitions saved successfully");
-    setIsDefineSkillsOpen(false);
   };
 
   return (
@@ -280,14 +208,25 @@ const JobRoleSkillRelationship = () => {
                               {role.skills.length}/{role.maxSkills}
                             </Badge>
                           </TableCell>
-                          <TableCell>{role.skills.length}</TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => handleDefineSkills(role)}>
-                                <Eye className="h-4 w-4 mr-1" />
-                                View/Edit
-                              </Button>
+                            <div className="flex flex-wrap gap-1 max-w-xs">
+                              {role.skills.slice(0, 3).map((skill, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {skill}
+                                </Badge>
+                              ))}
+                              {role.skills.length > 3 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  +{role.skills.length - 3} more
+                                </Badge>
+                              )}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button size="sm" variant="outline" onClick={() => handleViewEditRole(role)}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              View/Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -351,7 +290,8 @@ const JobRoleSkillRelationship = () => {
                       max="100"
                     />
                     <p className="text-sm text-muted-foreground mt-1">
-                      Maximum number of skills that can be assigned to any job role globally
+                      Maximum number of skills that can be assigned to any job role globally. 
+                      Must be ≥ {Math.max(...jobRoles.map(role => role.maxSkills))} (highest local maximum).
                     </p>
                   </div>
                 </div>
@@ -361,200 +301,6 @@ const JobRoleSkillRelationship = () => {
                   </Button>
                   <Button onClick={handleSaveGlobalSettings}>
                     Save Settings
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            {/* Define Skills Dialog */}
-            <Dialog open={isDefineSkillsOpen} onOpenChange={setIsDefineSkillsOpen}>
-              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    Define Skills for {selectedJobRole?.title}
-                  </DialogTitle>
-                </DialogHeader>
-                
-                {selectedJobRole && (
-                  <div className="space-y-6">
-                    {/* Job Role Info */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">Job Role Information</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label>Local Maximum Skills</Label>
-                            <Input
-                              type="number"
-                              defaultValue={selectedJobRole.maxSkills}
-                              min="1"
-                              max={globalSettings.globalMaxSkills}
-                              className="mt-1"
-                            />
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Must be ≤ {globalSettings.globalMaxSkills} (global limit)
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Clusters Section */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-yellow-500" />
-                          Required Clusters
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {selectedJobRole.clusters.map((cluster) => (
-                            <div key={cluster.id} className="flex items-center justify-between p-3 border rounded-md">
-                              <div className="flex items-center gap-3">
-                                <span className="font-medium">{cluster.name}</span>
-                                {cluster.isAISuggested && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <Sparkles className="h-3 w-3 mr-1" />
-                                    AI Suggested
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant={cluster.isRequired ? "default" : "outline"}>
-                                  {cluster.isRequired ? "Required" : "Optional"}
-                                </Badge>
-                                <Button size="sm" variant="ghost">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                          <Button variant="outline" className="w-full">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Cluster
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Groups Section */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-yellow-500" />
-                          Required Groups
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {selectedJobRole.groups.map((group) => (
-                            <div key={group.id} className="flex items-center justify-between p-3 border rounded-md">
-                              <div className="flex items-center gap-3">
-                                <span className="font-medium">{group.name}</span>
-                                {group.isAISuggested && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <Sparkles className="h-3 w-3 mr-1" />
-                                    AI Suggested
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant={group.isRequired ? "default" : "outline"}>
-                                  {group.isRequired ? "Required" : "Optional"}
-                                </Badge>
-                                <Button size="sm" variant="ghost">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                          <Button variant="outline" className="w-full">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Group
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Skills Section */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-yellow-500" />
-                          Required Skills
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="overflow-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Skill</TableHead>
-                                <TableHead>Cluster</TableHead>
-                                <TableHead>Group</TableHead>
-                                <TableHead>Proficiency</TableHead>
-                                <TableHead>Criticality</TableHead>
-                                <TableHead>Source</TableHead>
-                                <TableHead>Actions</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {selectedJobRole.skills.map((skill) => (
-                                <TableRow key={skill.id}>
-                                  <TableCell className="font-medium">{skill.skillName}</TableCell>
-                                  <TableCell>{skill.cluster}</TableCell>
-                                  <TableCell>{skill.group}</TableCell>
-                                  <TableCell>
-                                    <Badge variant="outline">{skill.proficiencyLevel}</Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge 
-                                      variant={
-                                        skill.criticalityLevel === 'High' ? 'destructive' :
-                                        skill.criticalityLevel === 'Medium' ? 'default' : 'secondary'
-                                      }
-                                    >
-                                      {skill.criticalityLevel}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    {skill.isAISuggested ? (
-                                      <Badge variant="secondary" className="text-xs">
-                                        <Sparkles className="h-3 w-3 mr-1" />
-                                        AI
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="text-xs">Manual</Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Button size="sm" variant="ghost">
-                                      <Pencil className="h-4 w-4" />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                        <Button variant="outline" className="w-full mt-4">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Skill
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsDefineSkillsOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveSkillDefinitions}>
-                    Save Changes
                   </Button>
                 </DialogFooter>
               </DialogContent>

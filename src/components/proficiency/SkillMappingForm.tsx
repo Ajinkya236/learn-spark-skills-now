@@ -15,8 +15,6 @@ interface SkillMappingFormProps {
   onMappingChange: (mapping: Omit<SkillProficiencyMapping, 'id' | 'isActive'>) => void;
   onSubmit: () => void;
   skills: string[];
-  clusters: string[];
-  groups: string[];
   proficiencyLevels: ProficiencyLevel[];
 }
 
@@ -28,8 +26,6 @@ export const SkillMappingForm: React.FC<SkillMappingFormProps> = ({
   onMappingChange,
   onSubmit,
   skills,
-  clusters,
-  groups,
   proficiencyLevels
 }) => {
   return (
@@ -77,36 +73,6 @@ export const SkillMappingForm: React.FC<SkillMappingFormProps> = ({
               <SelectContent>
                 {proficiencyLevels.map(level => (
                   <SelectItem key={level.id} value={level.title}>{level.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="cluster" className="text-right">
-              Cluster
-            </Label>
-            <Select value={mapping.cluster} onValueChange={(value) => onMappingChange({ ...mapping, cluster: value })}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select cluster" />
-              </SelectTrigger>
-              <SelectContent>
-                {clusters.map(cluster => (
-                  <SelectItem key={cluster} value={cluster}>{cluster}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="group" className="text-right">
-              Group
-            </Label>
-            <Select value={mapping.group} onValueChange={(value) => onMappingChange({ ...mapping, group: value })}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select group" />
-              </SelectTrigger>
-              <SelectContent>
-                {groups.map(group => (
-                  <SelectItem key={group} value={group}>{group}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

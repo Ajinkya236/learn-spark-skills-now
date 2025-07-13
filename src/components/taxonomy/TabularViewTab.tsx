@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Search, Edit, Archive } from "lucide-react";
 import { TaxonomyNode } from "@/hooks/useTaxonomyManagement";
@@ -37,6 +38,71 @@ export const TabularViewTab: React.FC<TabularViewTabProps> = ({
   onEditFromTable,
   onInactivateFromTable
 }) => {
+  // Transform data to show separate rows for each level
+  const getExpandedTableData = () => {
+    const expandedData: Array<{
+      id: string;
+      name: string;
+      type: 'cluster' | 'group' | 'skill';
+      cluster: string;
+      group: string;
+      skill: string;
+      node?: TaxonomyNode;
+    }> = [];
+
+    tablePaginatedData.forEach(item => {
+      if (item.node) {
+        // Add cluster row
+        if (item.clusterId) {
+          expandedData.push({
+            id: item.clusterId,
+            name: item.cluster,
+            type: 'cluster',
+            cluster: item.cluster,
+            group: '',
+            skill: '',
+            node: item.node
+          });
+        }
+
+        // Add group row
+        if (item.groupId) {
+          expandedData.push({
+            id: item.groupId,
+            name: item.group,
+            type: 'group',
+            cluster: item.cluster,
+            group: item.group,
+            skill: '',
+            node: item.node
+          });
+        }
+
+        // Add skill row
+        if (item.skillId) {
+          expandedData.push({
+            id: item.skillId,
+            name: item.skill,
+            type: 'skill',
+            cluster: item.cluster,
+            group: item.group,
+            skill: item.skill,
+            node: item.node
+          });
+        }
+      }
+    });
+
+    // Remove duplicates based on id
+    const uniqueData = expandedData.filter((item, index, self) => 
+      index === self.findIndex(t => t.id === item.id)
+    );
+
+    return uniqueData;
+  };
+
+  const expandedData = getExpandedTableData();
+
   return (
     <Card>
       <CardHeader>
@@ -59,6 +125,8 @@ export const TabularViewTab: React.FC<TabularViewTabProps> = ({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="font-inter">Type</TableHead>
+                <TableHead className="font-inter">Name</TableHead>
                 <TableHead className="font-inter">Cluster</TableHead>
                 <TableHead className="font-inter">Group</TableHead>
                 <TableHead className="font-inter">Skill</TableHead>
@@ -66,15 +134,24 @@ export const TabularViewTab: React.FC<TabularViewTabProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tablePaginatedData.length === 0 ? (
+              {expandedData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground font-inter">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground font-inter">
                     No data found
                   </TableCell>
                 </TableRow>
               ) : (
-                tablePaginatedData.map((item, index) => (
-                  <TableRow key={index}>
+                expandedData.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <Badge variant={
+                        item.type === 'cluster' ? 'default' :
+                        item.type === 'group' ? 'secondary' : 'outline'
+                      }>
+                        {item.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium font-inter">{item.name}</TableCell>
                     <TableCell className="font-inter">{item.cluster}</TableCell>
                     <TableCell className="font-inter">{item.group}</TableCell>
                     <TableCell className="font-inter">{item.skill}</TableCell>
@@ -83,7 +160,7 @@ export const TabularViewTab: React.FC<TabularViewTabProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onEditFromTable(item.skillId!)}
+                          onClick={() => onEditFromTable(item.id)}
                           className="font-inter"
                         >
                           <Edit className="h-4 w-4" />
@@ -91,7 +168,7 @@ export const TabularViewTab: React.FC<TabularViewTabProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onInactivateFromTable(item.skillId!)}
+                          onClick={() => onInactivateFromTable(item.id)}
                           className="text-orange-600 hover:text-orange-600 font-inter"
                         >
                           <Archive className="h-4 w-4" />
