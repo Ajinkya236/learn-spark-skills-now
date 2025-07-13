@@ -146,9 +146,9 @@ const JobRoleSkillRelationship = () => {
   const filteredJobRoles = jobRoles.filter(role => {
     return (
       role.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (!businessFilter || role.business === businessFilter) &&
-      (!groupFilter || role.group === groupFilter) &&
-      (!departmentFilter || role.department === departmentFilter)
+      (!businessFilter || businessFilter === 'all' || role.business === businessFilter) &&
+      (!groupFilter || groupFilter === 'all' || role.group === groupFilter) &&
+      (!departmentFilter || departmentFilter === 'all' || role.department === departmentFilter)
     );
   });
 
@@ -212,7 +212,7 @@ const JobRoleSkillRelationship = () => {
                       <SelectValue placeholder="Filter by Business" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Businesses</SelectItem>
+                      <SelectItem value="all">All Businesses</SelectItem>
                       {businesses.map(business => (
                         <SelectItem key={business} value={business}>{business}</SelectItem>
                       ))}
@@ -224,7 +224,7 @@ const JobRoleSkillRelationship = () => {
                       <SelectValue placeholder="Filter by Group" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Groups</SelectItem>
+                      <SelectItem value="all">All Groups</SelectItem>
                       {groups.map(group => (
                         <SelectItem key={group} value={group}>{group}</SelectItem>
                       ))}
@@ -236,7 +236,7 @@ const JobRoleSkillRelationship = () => {
                       <SelectValue placeholder="Filter by Department" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Departments</SelectItem>
+                      <SelectItem value="all">All Departments</SelectItem>
                       {departments.map(department => (
                         <SelectItem key={department} value={department}>{department}</SelectItem>
                       ))}
