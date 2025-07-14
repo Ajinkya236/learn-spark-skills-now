@@ -34,7 +34,7 @@ export const SkillMappingsTable = ({ mappings, onEdit, onInactivate }: SkillMapp
           <TableRow>
             <TableHead>Skill</TableHead>
             <TableHead>Proficiency Level</TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead>Proficiency Description</TableHead>
             <TableHead>Cluster</TableHead>
             <TableHead>Group</TableHead>
             <TableHead>Actions</TableHead>

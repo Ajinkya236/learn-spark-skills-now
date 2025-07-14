@@ -12,7 +12,7 @@ import { GlobalLevelsTable } from "@/components/proficiency/GlobalLevelsTable";
 import { SkillMappingsTable } from "@/components/proficiency/SkillMappingsTable";
 import { EditLevelDialog } from "@/components/proficiency/EditLevelDialog";
 import { ImportDialog } from "@/components/proficiency/ImportDialog";
-import { SkillMappingForm } from "@/components/proficiency/SkillMappingForm";
+import { AddProficiencyDialog } from "@/components/proficiency/AddProficiencyDialog";
 
 // Updated interfaces to match component expectations
 interface ProficiencyLevel {
@@ -37,7 +37,7 @@ const ProficiencyLevels = () => {
   const [editingLevel, setEditingLevel] = useState<ProficiencyLevel | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showAddLevelDialog, setShowAddLevelDialog] = useState(false);
-  const [showSkillMappingForm, setShowSkillMappingForm] = useState(false);
+  const [showAddProficiencyDialog, setShowAddProficiencyDialog] = useState(false);
 
   // Updated mock data with correct structure
   const [globalLevels, setGlobalLevels] = useState<ProficiencyLevel[]>([
@@ -123,23 +123,20 @@ const ProficiencyLevels = () => {
     setShowAddLevelDialog(false);
   };
 
-  const handleAddSkillMapping = (mappings: Array<{ skill: string; proficiencyId: string }>) => {
-    const newMappings = mappings.map(mapping => {
-      const proficiencyLevel = globalLevels.find(level => level.id === mapping.proficiencyId);
-      return {
-        id: Date.now().toString() + Math.random(),
-        skill: mapping.skill,
-        proficiencyDescription: `${mapping.skill} proficiency`,
-        proficiencyLevel: proficiencyLevel?.title || 'Beginner',
-        cluster: 'General',
-        group: 'Technical',
-        isActive: true
-      };
-    });
+  const handleAddProficiency = (proficiencyData: { skill: string; proficiencyLevel: string; proficiencyDescription: string }) => {
+    const newMapping: SkillProficiencyMapping = {
+      id: Date.now().toString(),
+      skill: proficiencyData.skill,
+      proficiencyDescription: proficiencyData.proficiencyDescription,
+      proficiencyLevel: proficiencyData.proficiencyLevel,
+      cluster: 'General',
+      group: 'Technical',
+      isActive: true
+    };
     
-    setSkillMappings(prev => [...prev, ...newMappings]);
-    toast.success("Skill mappings added successfully");
-    setShowSkillMappingForm(false);
+    setSkillMappings(prev => [...prev, newMapping]);
+    toast.success("Proficiency mapping added successfully");
+    setShowAddProficiencyDialog(false);
   };
 
   const handleEditSkillMapping = (id: string, updatedMapping: Omit<SkillProficiencyMapping, 'id' | 'isActive'>) => {
@@ -173,7 +170,7 @@ const ProficiencyLevels = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset>
-          <div className="flex-1 space-y-6 p-4 md:p-6">
+          <div className="flex-1 space-y-4 p-4 md:p-6">
             {/* Header */}
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">Proficiency Levels</h1>
@@ -234,22 +231,23 @@ const ProficiencyLevels = () => {
                   </TabsList>
 
                   <TabsContent value="global" className="space-y-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <div>
                         <h3 className="text-lg font-semibold">Global Proficiency Levels</h3>
                         <p className="text-sm text-muted-foreground">
                           Define organization-wide proficiency levels
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <Button 
                           variant="outline" 
                           onClick={() => setShowImportDialog(true)}
+                          className="w-full sm:w-auto"
                         >
                           <Upload className="h-4 w-4 mr-2" />
                           Import
                         </Button>
-                        <Button onClick={() => setShowAddLevelDialog(true)}>
+                        <Button onClick={() => setShowAddLevelDialog(true)} className="w-full sm:w-auto">
                           <Plus className="h-4 w-4 mr-2" />
                           Add Level
                         </Button>
@@ -263,16 +261,16 @@ const ProficiencyLevels = () => {
                   </TabsContent>
 
                   <TabsContent value="mappings" className="space-y-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <div>
                         <h3 className="text-lg font-semibold">Skill Proficiency Mappings</h3>
                         <p className="text-sm text-muted-foreground">
                           Map specific proficiency levels to individual skills
                         </p>
                       </div>
-                      <Button onClick={() => setShowSkillMappingForm(true)}>
+                      <Button onClick={() => setShowAddProficiencyDialog(true)} className="w-full sm:w-auto">
                         <Plus className="h-4 w-4 mr-2" />
-                        Add Mapping
+                        Add Proficiency
                       </Button>
                     </div>
                     
@@ -306,11 +304,11 @@ const ProficiencyLevels = () => {
               onImport={handleImport}
             />
 
-            {/* Skill Mapping Form */}
-            <SkillMappingForm
-              open={showSkillMappingForm}
-              onOpenChange={setShowSkillMappingForm}
-              onSave={handleAddSkillMapping}
+            {/* Add Proficiency Dialog */}
+            <AddProficiencyDialog
+              open={showAddProficiencyDialog}
+              onOpenChange={setShowAddProficiencyDialog}
+              onSave={handleAddProficiency}
               skills={skills}
               proficiencyLevels={globalLevels}
             />
