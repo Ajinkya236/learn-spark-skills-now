@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -104,16 +105,43 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
 
   const validateData = () => {
     const errors: string[] = [];
+    const nameSet = new Set<string>();
     
     importData.forEach((row, index) => {
+      const rowNum = index + 1;
+      
+      // Rule 7a: Name should be unique
       if (!row.name.trim()) {
-        errors.push(`Row ${index + 1}: Name is required`);
+        errors.push(`Row ${rowNum}: Name is required`);
+      } else if (nameSet.has(row.name.toLowerCase())) {
+        errors.push(`Row ${rowNum}: Name "${row.name}" must be unique`);
+      } else {
+        nameSet.add(row.name.toLowerCase());
       }
+      
+      // Rule 7b: Type validation
       if (!['cluster', 'group', 'skill'].includes(row.type)) {
-        errors.push(`Row ${index + 1}: Invalid type "${row.type}"`);
+        errors.push(`Row ${rowNum}: Type must be one of: cluster, group, skill`);
       }
-      if (row.type !== 'cluster' && !row.parent.trim()) {
-        errors.push(`Row ${index + 1}: Parent is required for ${row.type}`);
+      
+      // Rule 7c: Parent of skill should only be group and not empty
+      if (row.type === 'skill' && !row.parent.trim()) {
+        errors.push(`Row ${rowNum}: Parent group is required for skills`);
+      }
+      
+      // Rule 7d: Parent of group should only be cluster and not empty
+      if (row.type === 'group' && !row.parent.trim()) {
+        errors.push(`Row ${rowNum}: Parent cluster is required for groups`);
+      }
+      
+      // Rule 7e: Parent of cluster should be empty
+      if (row.type === 'cluster' && row.parent.trim()) {
+        errors.push(`Row ${rowNum}: Clusters should not have a parent`);
+      }
+      
+      // Rule 7f: Description cannot be empty
+      if (!row.description.trim()) {
+        errors.push(`Row ${rowNum}: Description is required`);
       }
     });
 
@@ -184,13 +212,13 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 font-black font-inter text-xl">
             <Upload className="h-5 w-5" />
             Bulk Import Taxonomy
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="font-inter">
             Import multiple taxonomy items from CSV or Excel files
           </DialogDescription>
         </DialogHeader>
@@ -198,10 +226,10 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
         {step === 'upload' && (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="border-2 border-dashed border-muted rounded-lg p-8">
+              <div className="border-2 border-dashed border-muted rounded-xl p-8">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Upload Your File</h3>
-                <p className="text-muted-foreground mb-4">
+                <h3 className="text-lg font-bold mb-2 font-inter">Upload Your File</h3>
+                <p className="text-muted-foreground mb-4 font-inter">
                   Select a CSV or Excel file containing your taxonomy data
                 </p>
                 
@@ -213,13 +241,16 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
                   className="hidden"
                 />
                 
-                <Button onClick={() => fileInputRef.current?.click()}>
+                <Button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="rounded-lg font-inter"
+                >
                   <Upload className="mr-2 h-4 w-4" />
                   Choose File
                 </Button>
                 
                 {file && (
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-sm text-muted-foreground mt-2 font-inter">
                     Selected: {file.name}
                   </p>
                 )}
@@ -228,19 +259,32 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium">Need a template?</h4>
-                <Button variant="outline" onClick={downloadTemplate}>
+                <h4 className="font-bold font-inter">Need a template?</h4>
+                <Button 
+                  variant="outline" 
+                  onClick={downloadTemplate}
+                  className="rounded-lg font-inter"
+                >
                   <Download className="mr-2 h-4 w-4" />
                   Download Template
                 </Button>
               </div>
               
-              <Alert>
+              <Alert className="rounded-lg">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Required columns:</strong> name, description, type, parent
-                  <br />
-                  <strong>Note:</strong> Parent should be empty for clusters.
+                  <div className="font-inter space-y-2">
+                    <p><strong>Required columns:</strong> name, description, type, parent</p>
+                    <p><strong>Validation Rules:</strong></p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Names must be unique</li>
+                      <li>Type must be: cluster, group, or skill</li>
+                      <li>Skills must have a parent group</li>
+                      <li>Groups must have a parent cluster</li>
+                      <li>Clusters must have empty parent</li>
+                      <li>Description is required for all items</li>
+                    </ul>
+                  </div>
                 </AlertDescription>
               </Alert>
             </div>
@@ -382,15 +426,28 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
 
         <DialogFooter>
           {step === 'upload' && (
-            <Button variant="outline" onClick={resetDialog}>Cancel</Button>
+            <Button 
+              variant="outline" 
+              onClick={resetDialog}
+              className="rounded-lg font-inter"
+            >
+              Cancel
+            </Button>
           )}
           
           {step === 'validate' && (
             <>
-              <Button variant="outline" onClick={() => setStep('upload')}>Back</Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setStep('upload')}
+                className="rounded-lg font-inter"
+              >
+                Back
+              </Button>
               <Button 
                 onClick={validateData}
                 disabled={validationErrors.length > 0}
+                className="rounded-lg font-inter bg-jio-blue hover:bg-jio-blue/90"
               >
                 {validationErrors.length > 0 ? 'Fix Errors First' : 'Start Import'}
               </Button>
@@ -398,7 +455,12 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
           )}
           
           {step === 'complete' && (
-            <Button onClick={handleComplete}>Done</Button>
+            <Button 
+              onClick={handleComplete}
+              className="rounded-lg font-inter bg-jio-blue hover:bg-jio-blue/90"
+            >
+              Done
+            </Button>
           )}
         </DialogFooter>
       </DialogContent>

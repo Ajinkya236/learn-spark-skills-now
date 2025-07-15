@@ -53,7 +53,7 @@ All colors MUST be HSL.
     --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.3);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -102,6 +102,41 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply bg-background text-foreground;
+    font-family: 'Arial', sans-serif;
   }
+
+  /* Headings use Inter Black */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+  }
+
+  /* Subheadings use Inter Black */
+  .subheading {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+  }
+
+  /* Default buttons and cards rounded corners */
+  .btn, button {
+    border-radius: var(--radius);
+  }
+
+  .card {
+    border-radius: var(--radius);
+  }
+}
+
+/* Utility classes for font families */
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-arial {
+  font-family: 'Arial', sans-serif;
+}
+
+.font-black {
+  font-weight: 900;
 }

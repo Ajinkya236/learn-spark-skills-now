@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaxonomyNode } from "@/types/taxonomy";
+import { Package, Layers, FolderTree, Target } from "lucide-react";
 
 interface TaxonomyStatsProps {
   data: TaxonomyNode[];
@@ -39,43 +40,50 @@ export const TaxonomyStats: React.FC<TaxonomyStatsProps> = ({ data }) => {
 
   const stats = calculateStats();
 
+  const statCards = [
+    {
+      title: "Total Items",
+      value: stats.totalItems,
+      icon: Package,
+      gradient: "from-blue-500 to-blue-600"
+    },
+    {
+      title: "Clusters",
+      value: stats.totalClusters,
+      icon: Layers,
+      gradient: "from-purple-500 to-purple-600"
+    },
+    {
+      title: "Groups",
+      value: stats.totalGroups,
+      icon: FolderTree,
+      gradient: "from-green-500 to-green-600"
+    },
+    {
+      title: "Skills",
+      value: stats.totalSkills,
+      icon: Target,
+      gradient: "from-orange-500 to-orange-600"
+    }
+  ];
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium font-inter">Total Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold font-inter">{stats.totalItems}</div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium font-inter">Clusters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold font-inter">{stats.totalClusters}</div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium font-inter">Groups</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold font-inter">{stats.totalGroups}</div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium font-inter">Skills</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold font-inter">{stats.totalSkills}</div>
-        </CardContent>
-      </Card>
+      {statCards.map((stat, index) => {
+        const Icon = stat.icon;
+        return (
+          <Card key={index} className="relative overflow-hidden rounded-xl border-0 shadow-lg">
+            <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-90`} />
+            <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2 text-white">
+              <CardTitle className="text-sm font-black font-inter">{stat.title}</CardTitle>
+              <Icon className="h-5 w-5 text-white/80" />
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="text-3xl font-black font-inter text-white">{stat.value}</div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

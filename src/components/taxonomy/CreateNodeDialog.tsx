@@ -1,12 +1,13 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { TaxonomyNode } from "@/types/taxonomy";
+import { ParentSelector } from "@/components/taxonomy/ParentSelector";
 
 interface CreateNodeDialogProps {
   open: boolean;
@@ -82,10 +83,12 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
     }
 
     const nodeData: Partial<TaxonomyNode> = {
-      ...formData,
+      name: formData.name.trim(),
+      description: formData.description.trim(),
       type: nodeType,
       isActive: true,
-      rank: 1
+      rank: 1,
+      parentId: formData.parentId || undefined
     };
 
     onNodeCreated(nodeData);
@@ -99,11 +102,13 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
     setErrors({});
   };
 
+  const availableParents = getAvailableParents();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg rounded-xl">
         <DialogHeader>
-          <DialogTitle className="font-inter font-bold text-jio-dark">
+          <DialogTitle className="font-inter font-black text-jio-dark text-xl">
             Create New {nodeType.charAt(0).toUpperCase() + nodeType.slice(1)}
           </DialogTitle>
           <DialogDescription className="font-inter">
@@ -111,7 +116,7 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-6 py-4">
           {/* Name Field */}
           <div className="space-y-2">
             <Label htmlFor="name" className="font-inter font-medium">Name *</Label>
@@ -120,7 +125,7 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
               value={formData.name} 
               onChange={e => setFormData({ ...formData, name: e.target.value })} 
               placeholder={`Enter ${nodeType} name`}
-              className="font-inter"
+              className="font-inter rounded-lg"
             />
             {errors.name && <p className="text-sm text-destructive font-inter">{errors.name}</p>}
           </div>
@@ -133,39 +138,46 @@ export const CreateNodeDialog: React.FC<CreateNodeDialogProps> = ({
               value={formData.description} 
               onChange={e => setFormData({ ...formData, description: e.target.value })} 
               placeholder={`Describe this ${nodeType}`}
-              className="font-inter"
+              className="font-inter rounded-lg"
+              rows={3}
             />
             {errors.description && <p className="text-sm text-destructive font-inter">{errors.description}</p>}
           </div>
 
           {/* Parent Selection */}
-          {(nodeType === 'group' || nodeType === 'skill') && (
-            <div className="space-y-2">
-              <Label htmlFor="parent" className="font-inter font-medium">
-                Parent {nodeType === 'group' ? 'Cluster' : 'Group'} *
-              </Label>
-              <Select value={formData.parentId} onValueChange={value => setFormData({ ...formData, parentId: value })}>
-                <SelectTrigger className="font-inter">
-                  <SelectValue placeholder={`Select parent ${nodeType === 'group' ? 'cluster' : 'group'}`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {getAvailableParents().map(parent => (
-                    <SelectItem key={parent.id} value={parent.id} className="font-inter">
-                      {parent.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.parentId && <p className="text-sm text-destructive font-inter">{errors.parentId}</p>}
-            </div>
+          {nodeType === 'group' && (
+            <ParentSelector
+              parentType="cluster"
+              selectedParentId={formData.parentId}
+              onParentSelect={(parentId) => setFormData({ ...formData, parentId })}
+              availableParents={availableParents}
+              error={errors.parentId}
+            />
+          )}
+
+          {nodeType === 'skill' && (
+            <ParentSelector
+              parentType="group"
+              selectedParentId={formData.parentId}
+              onParentSelect={(parentId) => setFormData({ ...formData, parentId })}
+              availableParents={availableParents}
+              error={errors.parentId}
+            />
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-inter">
+        <DialogFooter className="gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)} 
+            className="font-inter rounded-lg"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter">
+          <Button 
+            onClick={handleSubmit} 
+            className="bg-jio-blue hover:bg-jio-blue/90 text-jio-white font-inter rounded-lg"
+          >
             Create {nodeType.charAt(0).toUpperCase() + nodeType.slice(1)}
           </Button>
         </DialogFooter>

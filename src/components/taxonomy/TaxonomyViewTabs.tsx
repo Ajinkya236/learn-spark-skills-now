@@ -68,13 +68,7 @@ export const TaxonomyViewTabs: React.FC<TaxonomyViewTabsProps> = ({
 
   const getFilteredTableData = () => {
     const tableData = getTableData();
-    if (!searchTerm) return tableData;
-    
-    return tableData.filter(row => 
-      row.cluster.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      row.group.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      row.skill.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return tableData;
   };
 
   const filteredTableData = getFilteredTableData();
@@ -107,6 +101,7 @@ export const TaxonomyViewTabs: React.FC<TaxonomyViewTabsProps> = ({
         onPageChange={onPageChange}
         onEditFromTable={handleEditFromTable}
         onInactivateFromTable={handleInactivateFromTable}
+        taxonomyData={taxonomyData}
       />
     </div>
   );
