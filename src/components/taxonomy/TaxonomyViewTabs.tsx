@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TreeViewTab } from "@/components/taxonomy/TreeViewTab";
 import { TabularViewTab } from "@/components/taxonomy/TabularViewTab";
 import { TaxonomyNode } from "@/types/taxonomy";
 
@@ -23,15 +21,12 @@ const ITEMS_PER_PAGE = 10;
 
 export const TaxonomyViewTabs: React.FC<TaxonomyViewTabsProps> = ({
   taxonomyData,
-  activeTab,
-  onActiveTabChange,
   searchTerm,
   onSearchChange,
   currentPage,
   onPageChange,
   onEdit,
   onInactivate,
-  onCreateNode,
   findNodeById
 }) => {
   const getTableData = () => {
@@ -102,35 +97,17 @@ export const TaxonomyViewTabs: React.FC<TaxonomyViewTabsProps> = ({
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={onActiveTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="tree" className="font-inter">Tree View</TabsTrigger>
-        <TabsTrigger value="table" className="font-inter">Tabular View</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="tree">
-        <TreeViewTab
-          taxonomyData={taxonomyData}
-          searchTerm={searchTerm}
-          onSearchChange={onSearchChange}
-          onEdit={onEdit}
-          onInactivate={onInactivate}
-          onCreateChild={onCreateNode}
-        />
-      </TabsContent>
-
-      <TabsContent value="table">
-        <TabularViewTab
-          searchTerm={searchTerm}
-          onSearchChange={onSearchChange}
-          tablePaginatedData={tablePaginatedData}
-          currentPage={currentPage}
-          tableTotalPages={tableTotalPages}
-          onPageChange={onPageChange}
-          onEditFromTable={handleEditFromTable}
-          onInactivateFromTable={handleInactivateFromTable}
-        />
-      </TabsContent>
-    </Tabs>
+    <div className="w-full">
+      <TabularViewTab
+        searchTerm={searchTerm}
+        onSearchChange={onSearchChange}
+        tablePaginatedData={tablePaginatedData}
+        currentPage={currentPage}
+        tableTotalPages={tableTotalPages}
+        onPageChange={onPageChange}
+        onEditFromTable={handleEditFromTable}
+        onInactivateFromTable={handleInactivateFromTable}
+      />
+    </div>
   );
 };

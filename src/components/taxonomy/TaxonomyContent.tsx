@@ -24,7 +24,7 @@ export const TaxonomyContent: React.FC<TaxonomyContentProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('tree');
+  const [activeTab, setActiveTab] = useState('table');
 
   return (
     <>
