@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -13,6 +12,7 @@ import { SkillMappingsTable } from "@/components/proficiency/SkillMappingsTable"
 import { EditLevelDialog } from "@/components/proficiency/EditLevelDialog";
 import { ImportDialog } from "@/components/proficiency/ImportDialog";
 import { AddProficiencyDialog } from "@/components/proficiency/AddProficiencyDialog";
+import { EditSkillMappingDialog } from "@/components/proficiency/EditSkillMappingDialog";
 
 // Updated interfaces to match component expectations
 interface ProficiencyLevel {
@@ -33,8 +33,9 @@ interface SkillProficiencyMapping {
 }
 
 const ProficiencyLevels = () => {
-  const [activeTab, setActiveTab] = useState('global');
+  const [activeTab, setActiveTab] = useState('mappings'); // Start with skill mappings
   const [editingLevel, setEditingLevel] = useState<ProficiencyLevel | null>(null);
+  const [editingMapping, setEditingMapping] = useState<SkillProficiencyMapping | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showAddLevelDialog, setShowAddLevelDialog] = useState(false);
   const [showAddProficiencyDialog, setShowAddProficiencyDialog] = useState(false);
@@ -124,6 +125,12 @@ const ProficiencyLevels = () => {
   };
 
   const handleAddProficiency = (proficiencyData: { skill: string; proficiencyLevel: string; proficiencyDescription: string }) => {
+    // Validate mandatory fields
+    if (!proficiencyData.skill || !proficiencyData.proficiencyLevel || !proficiencyData.proficiencyDescription.trim()) {
+      toast.error("All fields are mandatory");
+      return;
+    }
+
     const newMapping: SkillProficiencyMapping = {
       id: Date.now().toString(),
       skill: proficiencyData.skill,
@@ -139,11 +146,22 @@ const ProficiencyLevels = () => {
     setShowAddProficiencyDialog(false);
   };
 
-  const handleEditSkillMapping = (id: string, updatedMapping: Omit<SkillProficiencyMapping, 'id' | 'isActive'>) => {
+  const handleEditSkillMapping = (mapping: SkillProficiencyMapping) => {
+    setEditingMapping(mapping);
+  };
+
+  const handleSaveEditedMapping = (id: string, updatedMapping: { proficiencyLevel: string; proficiencyDescription: string }) => {
+    // Validate mandatory fields
+    if (!updatedMapping.proficiencyLevel || !updatedMapping.proficiencyDescription.trim()) {
+      toast.error("Proficiency Level and Proficiency Description are mandatory fields");
+      return;
+    }
+
     setSkillMappings(prev => prev.map(mapping =>
       mapping.id === id ? { ...mapping, ...updatedMapping } : mapping
     ));
     toast.success("Skill mapping updated successfully");
+    setEditingMapping(null);
   };
 
   const handleInactivateSkillMapping = (id: string) => {
@@ -173,102 +191,72 @@ const ProficiencyLevels = () => {
           <div className="flex-1 space-y-4 p-4 md:p-6">
             {/* Header */}
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Proficiency Levels</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl md:text-3xl font-black font-inter text-foreground">Proficiency Levels</h1>
+              <p className="text-muted-foreground font-arial">
                 Manage global proficiency levels and skill-specific proficiency mappings
               </p>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
+              <Card className="rounded-xl">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Levels</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground font-arial">Total Levels</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="text-2xl font-bold">{stats.totalLevels}</div>
+                  <div className="text-2xl font-black font-inter">{stats.totalLevels}</div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="rounded-xl">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Levels</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground font-arial">Active Levels</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="text-2xl font-bold text-green-600">{stats.activeLevels}</div>
+                  <div className="text-2xl font-black font-inter text-green-600">{stats.activeLevels}</div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="rounded-xl">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Skill Mappings</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground font-arial">Skill Mappings</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="text-2xl font-bold">{stats.totalMappings}</div>
+                  <div className="text-2xl font-black font-inter">{stats.totalMappings}</div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="rounded-xl">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Avg Levels/Skill</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground font-arial">Avg Levels/Skill</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="text-2xl font-bold">{stats.avgLevelsPerSkill}</div>
+                  <div className="text-2xl font-black font-inter">{stats.avgLevelsPerSkill}</div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Main Content */}
-            <Card>
+            <Card className="rounded-xl">
               <CardHeader>
-                <CardTitle>Proficiency Management</CardTitle>
-                <CardDescription>
+                <CardTitle className="font-black font-inter">Proficiency Management</CardTitle>
+                <CardDescription className="font-arial">
                   Configure global proficiency levels and manage skill-specific mappings
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="global">Global Levels</TabsTrigger>
-                    <TabsTrigger value="mappings">Skill Mappings</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 rounded-lg">
+                    <TabsTrigger value="mappings" className="rounded-md font-inter">Skill Mappings</TabsTrigger>
+                    <TabsTrigger value="global" className="rounded-md font-inter">Global Levels</TabsTrigger>
                   </TabsList>
-
-                  <TabsContent value="global" className="space-y-4">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">Global Proficiency Levels</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Define organization-wide proficiency levels
-                        </p>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setShowImportDialog(true)}
-                          className="w-full sm:w-auto"
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Import
-                        </Button>
-                        <Button onClick={() => setShowAddLevelDialog(true)} className="w-full sm:w-auto">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Level
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <GlobalLevelsTable
-                      levels={globalLevels}
-                      onEdit={handleEditLevel}
-                    />
-                  </TabsContent>
 
                   <TabsContent value="mappings" className="space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <div>
-                        <h3 className="text-lg font-semibold">Skill Proficiency Mappings</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="text-lg font-black font-inter">Skill Proficiency Mappings</h3>
+                        <p className="text-sm text-muted-foreground font-arial">
                           Map specific proficiency levels to individual skills
                         </p>
                       </div>
-                      <Button onClick={() => setShowAddProficiencyDialog(true)} className="w-full sm:w-auto">
+                      <Button onClick={() => setShowAddProficiencyDialog(true)} className="w-full sm:w-auto rounded-lg">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Proficiency
                       </Button>
@@ -278,6 +266,36 @@ const ProficiencyLevels = () => {
                       mappings={skillMappings}
                       onEdit={handleEditSkillMapping}
                       onInactivate={handleInactivateSkillMapping}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="global" className="space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div>
+                        <h3 className="text-lg font-black font-inter">Global Proficiency Levels</h3>
+                        <p className="text-sm text-muted-foreground font-arial">
+                          Define organization-wide proficiency levels
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowImportDialog(true)}
+                          className="w-full sm:w-auto rounded-lg"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import
+                        </Button>
+                        <Button onClick={() => setShowAddLevelDialog(true)} className="w-full sm:w-auto rounded-lg">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Level
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <GlobalLevelsTable
+                      levels={globalLevels}
+                      onEdit={handleEditLevel}
                     />
                   </TabsContent>
                 </Tabs>
@@ -295,6 +313,19 @@ const ProficiencyLevels = () => {
                 }
               }}
               onSave={handleSaveLevel}
+            />
+
+            {/* Edit Skill Mapping Dialog */}
+            <EditSkillMappingDialog
+              mapping={editingMapping}
+              open={!!editingMapping}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setEditingMapping(null);
+                }
+              }}
+              onSave={handleSaveEditedMapping}
+              proficiencyLevels={globalLevels}
             />
 
             {/* Import Dialog */}

@@ -72,15 +72,15 @@ export const TaxonomyStats: React.FC<TaxonomyStatsProps> = ({ data }) => {
       {statCards.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <Card key={index} className="relative overflow-hidden rounded-xl border-0 shadow-lg">
+          <Card key={index} className="relative overflow-hidden aspect-square rounded-xl border-0 shadow-lg">
             <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-90`} />
-            <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2 text-white">
-              <CardTitle className="text-sm font-black font-inter">{stat.title}</CardTitle>
-              <Icon className="h-5 w-5 text-white/80" />
+            <CardHeader className="relative flex flex-col items-center justify-center space-y-2 p-4 text-white h-full">
+              <Icon className="h-8 w-8 text-white/80" />
+              <div className="text-center">
+                <div className="text-2xl font-black font-inter text-white">{stat.value}</div>
+                <CardTitle className="text-sm font-black font-inter">{stat.title}</CardTitle>
+              </div>
             </CardHeader>
-            <CardContent className="relative">
-              <div className="text-3xl font-black font-inter text-white">{stat.value}</div>
-            </CardContent>
           </Card>
         );
       })}

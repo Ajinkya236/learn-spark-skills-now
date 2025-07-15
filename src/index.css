@@ -106,24 +106,23 @@ All colors MUST be HSL.
     font-family: 'Arial', sans-serif;
   }
 
-  /* Headings use Inter Black */
-  h1, h2, h3, h4, h5, h6 {
+  /* Headings and subheadings use Inter Black */
+  h1, h2, h3, h4, h5, h6, .heading, .subheading {
     font-family: 'Inter', sans-serif;
     font-weight: 900;
   }
 
-  /* Subheadings use Inter Black */
-  .subheading {
-    font-family: 'Inter', sans-serif;
-    font-weight: 900;
-  }
-
-  /* Default buttons and cards rounded corners */
+  /* Default buttons and cards with rounded corners */
   .btn, button {
     border-radius: var(--radius);
   }
 
   .card {
+    border-radius: var(--radius);
+  }
+
+  /* All containers with rounded corners */
+  .container, .rounded-container {
     border-radius: var(--radius);
   }
 }

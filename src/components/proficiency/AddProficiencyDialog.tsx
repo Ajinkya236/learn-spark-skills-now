@@ -69,15 +69,17 @@ export const AddProficiencyDialog: React.FC<AddProficiencyDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-xl">
         <DialogHeader>
-          <DialogTitle>Add Proficiency Mapping</DialogTitle>
+          <DialogTitle className="font-black font-inter">Add Proficiency Mapping</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           {/* Skill Search */}
           <div className="space-y-2">
-            <Label htmlFor="skill-search">Search Skill</Label>
+            <Label htmlFor="skill-search" className="font-inter font-medium">
+              Search Skill <span className="text-red-500">*</span>
+            </Label>
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -85,19 +87,19 @@ export const AddProficiencyDialog: React.FC<AddProficiencyDialogProps> = ({
                 placeholder="Search for a skill..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-9 rounded-lg font-arial"
               />
             </div>
             
             {/* Skill Selection */}
             {searchTerm && (
-              <div className="max-h-32 overflow-y-auto border rounded-md">
+              <div className="max-h-32 overflow-y-auto border rounded-lg">
                 {filteredSkills.length > 0 ? (
                   filteredSkills.map((skill) => (
                     <button
                       key={skill}
                       type="button"
-                      className={`w-full text-left px-3 py-2 hover:bg-muted transition-colors ${
+                      className={`w-full text-left px-3 py-2 hover:bg-muted transition-colors font-arial ${
                         selectedSkill === skill ? 'bg-muted font-medium' : ''
                       }`}
                       onClick={() => {
@@ -109,7 +111,7 @@ export const AddProficiencyDialog: React.FC<AddProficiencyDialogProps> = ({
                     </button>
                   ))
                 ) : (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                  <div className="px-3 py-2 text-sm text-muted-foreground font-arial">
                     No skills found matching "{searchTerm}"
                   </div>
                 )}
@@ -119,20 +121,22 @@ export const AddProficiencyDialog: React.FC<AddProficiencyDialogProps> = ({
 
           {/* Selected Skill Display */}
           {selectedSkill && (
-            <div className="p-2 bg-muted rounded-md">
-              <span className="text-sm font-medium">Selected Skill: </span>
-              <span className="text-sm">{selectedSkill}</span>
+            <div className="p-3 bg-muted rounded-lg">
+              <span className="text-sm font-medium font-inter">Selected Skill: </span>
+              <span className="text-sm font-arial">{selectedSkill}</span>
             </div>
           )}
 
           {/* Proficiency Level Selection */}
           <div className="space-y-2">
-            <Label htmlFor="proficiency-level">Proficiency Level</Label>
+            <Label htmlFor="proficiency-level" className="font-inter font-medium">
+              Proficiency Level <span className="text-red-500">*</span>
+            </Label>
             <Select 
               value={selectedProficiencyLevel} 
               onValueChange={setSelectedProficiencyLevel}
             >
-              <SelectTrigger>
+              <SelectTrigger className="rounded-lg">
                 <SelectValue placeholder="Select proficiency level" />
               </SelectTrigger>
               <SelectContent>
@@ -147,25 +151,28 @@ export const AddProficiencyDialog: React.FC<AddProficiencyDialogProps> = ({
 
           {/* Proficiency Description */}
           <div className="space-y-2">
-            <Label htmlFor="proficiency-description">Proficiency Description</Label>
+            <Label htmlFor="proficiency-description" className="font-inter font-medium">
+              Proficiency Description <span className="text-red-500">*</span>
+            </Label>
             <Textarea
               id="proficiency-description"
               placeholder="Enter detailed description of the proficiency requirements..."
               value={proficiencyDescription}
               onChange={(e) => setProficiencyDescription(e.target.value)}
               rows={3}
+              className="rounded-lg font-arial"
             />
           </div>
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto rounded-lg">
             Cancel
           </Button>
           <Button 
             onClick={handleSave} 
             disabled={!isFormValid}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto rounded-lg"
           >
             Add Proficiency
           </Button>

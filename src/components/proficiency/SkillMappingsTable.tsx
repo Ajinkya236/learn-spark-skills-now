@@ -17,45 +17,40 @@ export interface SkillProficiencyMapping {
 
 interface SkillMappingsTableProps {
   mappings: SkillProficiencyMapping[];
-  onEdit: (id: string, updatedMapping: Omit<SkillProficiencyMapping, 'id' | 'isActive'>) => void;
+  onEdit: (mapping: SkillProficiencyMapping) => void;
   onInactivate: (id: string) => void;
 }
 
 export const SkillMappingsTable = ({ mappings, onEdit, onInactivate }: SkillMappingsTableProps) => {
-  const handleEdit = (mapping: SkillProficiencyMapping) => {
-    const { id, isActive, ...editableFields } = mapping;
-    onEdit(id, editableFields);
-  };
-
   return (
-    <div className="overflow-auto">
+    <div className="overflow-auto rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Skill</TableHead>
-            <TableHead>Proficiency Level</TableHead>
-            <TableHead>Proficiency Description</TableHead>
-            <TableHead>Cluster</TableHead>
-            <TableHead>Group</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="font-black font-inter">Skill</TableHead>
+            <TableHead className="font-black font-inter">Proficiency Level</TableHead>
+            <TableHead className="font-black font-inter">Proficiency Description</TableHead>
+            <TableHead className="font-black font-inter">Cluster</TableHead>
+            <TableHead className="font-black font-inter">Group</TableHead>
+            <TableHead className="font-black font-inter">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {mappings.map((mapping) => (
             <TableRow key={mapping.id}>
-              <TableCell className="font-medium">{mapping.skill}</TableCell>
+              <TableCell className="font-medium font-arial">{mapping.skill}</TableCell>
               <TableCell>
-                <Badge variant="outline">{mapping.proficiencyLevel}</Badge>
+                <Badge variant="outline" className="rounded-lg font-arial">{mapping.proficiencyLevel}</Badge>
               </TableCell>
-              <TableCell>{mapping.proficiencyDescription}</TableCell>
-              <TableCell>{mapping.cluster}</TableCell>
-              <TableCell>{mapping.group}</TableCell>
+              <TableCell className="font-arial">{mapping.proficiencyDescription}</TableCell>
+              <TableCell className="font-arial">{mapping.cluster}</TableCell>
+              <TableCell className="font-arial">{mapping.group}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => handleEdit(mapping)}>
+                  <Button size="sm" variant="ghost" onClick={() => onEdit(mapping)} className="rounded-lg">
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => onInactivate(mapping.id)}>
+                  <Button size="sm" variant="ghost" onClick={() => onInactivate(mapping.id)} className="rounded-lg">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
