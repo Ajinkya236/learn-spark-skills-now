@@ -106,15 +106,27 @@ All colors MUST be HSL.
     font-family: 'Arial', sans-serif;
   }
 
-  /* Headings and subheadings use Inter Black */
+  /* Headings and subheadings use Inter Black (900 weight) */
   h1, h2, h3, h4, h5, h6, .heading, .subheading {
     font-family: 'Inter', sans-serif;
-    font-weight: 900;
+    font-weight: 900; /* Inter Black */
+  }
+
+  /* Body text uses Arial */
+  p, span, div, label, td, th, li, a, button {
+    font-family: 'Arial', sans-serif;
+  }
+
+  /* Override for specific heading classes */
+  .text-xl, .text-2xl, .text-3xl, .text-4xl, .text-5xl, .text-6xl {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900; /* Inter Black */
   }
 
   /* Default buttons and cards with rounded corners */
   .btn, button {
     border-radius: var(--radius);
+    font-family: 'Arial', sans-serif;
   }
 
   .card {
@@ -138,4 +150,15 @@ All colors MUST be HSL.
 
 .font-black {
   font-weight: 900;
+}
+
+/* Ensure headings always use Inter Black */
+.font-heading {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+}
+
+/* Ensure body text always uses Arial */
+.font-body {
+  font-family: 'Arial', sans-serif;
 }
