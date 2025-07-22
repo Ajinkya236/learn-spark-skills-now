@@ -22,6 +22,11 @@ export default {
 			fontFamily: {
 				'inter': ['Inter', 'sans-serif'],
 				'arial': ['Arial', 'sans-serif'],
+				'heading': ['Inter', 'sans-serif'], // For headings
+				'body': ['Arial', 'sans-serif'], // For body text
+			},
+			fontWeight: {
+				'black': '900', // Inter Black
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -68,10 +73,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				jio: {
-					blue: 'hsl(var(--jio-blue))',
-					dark: 'hsl(var(--jio-dark))',
-					white: 'hsl(var(--jio-white))'
+				// Theme colors for direct use
+				theme: {
+					cream: '35 50% 92%', // #f3ece2
+					pink: '307 70% 50%', // #d65cc6  
+					dark: '253 38% 16%', // #221c35
 				}
 			},
 			borderRadius: {
