@@ -19,6 +19,9 @@ import EmployeeSkillRelationship from "./pages/skills/EmployeeSkillRelationship"
 import NotFound from "./pages/NotFound";
 import JobRoleDetails from '@/pages/skills/JobRoleDetails';
 import AddSkillsToJobRole from '@/pages/skills/AddSkillsToJobRole';
+import JobVariantSkillRelationship from '@/pages/skills/JobVariantSkillRelationship';
+import JobVariantDetails from '@/pages/skills/JobVariantDetails';
+import AddSkillsToJobVariant from '@/pages/skills/AddSkillsToJobVariant';
 
 const queryClient = new QueryClient();
 
@@ -39,6 +42,9 @@ function App() {
             <Route path="/skills/job-role-relationship" element={<JobRoleSkillRelationship />} />
             <Route path="/skills/job-role-relationship/:id" element={<JobRoleDetails />} />
             <Route path="/skills/job-role-relationship/:id/add-skills" element={<AddSkillsToJobRole />} />
+            <Route path="/skills/job-variant-relationship" element={<JobVariantSkillRelationship />} />
+            <Route path="/skills/job-variant-relationship/:id" element={<JobVariantDetails />} />
+            <Route path="/skills/job-variant-relationship/:id/add-skills" element={<AddSkillsToJobVariant />} />
             <Route path="/skills/job-position-relationship" element={<JobPositionSkillRelationship />} />
             <Route path="/skills/job-position-relationship/:id" element={<JobPositionDetails />} />
             <Route path="/skills/job-position-relationship/:id/add-skills" element={<AddSkillsToJobPosition />} />
