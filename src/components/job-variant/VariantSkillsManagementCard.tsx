@@ -20,6 +20,7 @@ interface JobVariantSkill {
 interface VariantSkillsManagementCardProps {
   skills: JobVariantSkill[];
   searchTerm: string;
+  sourceFilter: string;
   proficiencyFilter: string;
   criticalityFilter: string;
   clusterFilter: string;
@@ -27,6 +28,7 @@ interface VariantSkillsManagementCardProps {
   currentPage: number;
   totalPages: number;
   onSearchChange: (value: string) => void;
+  onSourceFilterChange: (value: string) => void;
   onProficiencyFilterChange: (value: string) => void;
   onCriticalityFilterChange: (value: string) => void;
   onClusterFilterChange: (value: string) => void;
@@ -40,6 +42,7 @@ interface VariantSkillsManagementCardProps {
 export const VariantSkillsManagementCard = ({
   skills,
   searchTerm,
+  sourceFilter,
   proficiencyFilter,
   criticalityFilter,
   clusterFilter,
@@ -47,6 +50,7 @@ export const VariantSkillsManagementCard = ({
   currentPage,
   totalPages,
   onSearchChange,
+  onSourceFilterChange,
   onProficiencyFilterChange,
   onCriticalityFilterChange,
   onClusterFilterChange,
@@ -73,11 +77,13 @@ export const VariantSkillsManagementCard = ({
       <CardContent className="space-y-4">
         <VariantSkillsFilters
           searchTerm={searchTerm}
+          sourceFilter={sourceFilter}
           proficiencyFilter={proficiencyFilter}
           criticalityFilter={criticalityFilter}
           clusterFilter={clusterFilter}
           groupFilter={groupFilter}
           onSearchChange={onSearchChange}
+          onSourceFilterChange={onSourceFilterChange}
           onProficiencyFilterChange={onProficiencyFilterChange}
           onCriticalityFilterChange={onCriticalityFilterChange}
           onClusterFilterChange={onClusterFilterChange}

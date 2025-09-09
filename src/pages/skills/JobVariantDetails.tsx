@@ -141,6 +141,7 @@ const JobVariantDetails = () => {
   // Skill management state
   const [skills, setSkills] = useState(mockVariantSkills);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [proficiencyFilter, setProficiencyFilter] = useState('all');
   const [criticalityFilter, setCriticalityFilter] = useState('all');
   const [clusterFilter, setClusterFilter] = useState('all');
@@ -152,12 +153,13 @@ const JobVariantDetails = () => {
   // Filter skills
   const filteredSkills = skills.filter((skill) => {
     const matchesSearch = skill.skillName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSource = sourceFilter === 'all' || skill.source === sourceFilter;
     const matchesProficiency = proficiencyFilter === 'all' || skill.proficiencyLevel === proficiencyFilter;
     const matchesCriticality = criticalityFilter === 'all' || skill.criticalityLevel === criticalityFilter;
     const matchesCluster = clusterFilter === 'all' || skill.cluster === clusterFilter;
     const matchesGroup = groupFilter === 'all' || skill.group === groupFilter;
 
-    return matchesSearch && matchesProficiency && matchesCriticality && matchesCluster && matchesGroup;
+    return matchesSearch && matchesSource && matchesProficiency && matchesCriticality && matchesCluster && matchesGroup;
   });
 
   const totalPages = Math.ceil(filteredSkills.length / itemsPerPage);
@@ -216,6 +218,7 @@ const JobVariantDetails = () => {
             <VariantSkillsManagementCard
               skills={displayedSkills}
               searchTerm={searchTerm}
+              sourceFilter={sourceFilter}
               proficiencyFilter={proficiencyFilter}
               criticalityFilter={criticalityFilter}
               clusterFilter={clusterFilter}
@@ -223,6 +226,7 @@ const JobVariantDetails = () => {
               currentPage={currentPage}
               totalPages={totalPages}
               onSearchChange={setSearchTerm}
+              onSourceFilterChange={setSourceFilter}
               onProficiencyFilterChange={setProficiencyFilter}
               onCriticalityFilterChange={setCriticalityFilter}
               onClusterFilterChange={setClusterFilter}

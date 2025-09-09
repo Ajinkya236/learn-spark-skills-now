@@ -11,11 +11,13 @@ import { Search } from "lucide-react";
 
 interface VariantSkillsFiltersProps {
   searchTerm: string;
+  sourceFilter: string;
   proficiencyFilter: string;
   criticalityFilter: string;
   clusterFilter: string;
   groupFilter: string;
   onSearchChange: (value: string) => void;
+  onSourceFilterChange: (value: string) => void;
   onProficiencyFilterChange: (value: string) => void;
   onCriticalityFilterChange: (value: string) => void;
   onClusterFilterChange: (value: string) => void;
@@ -24,11 +26,13 @@ interface VariantSkillsFiltersProps {
 
 export const VariantSkillsFilters = ({
   searchTerm,
+  sourceFilter,
   proficiencyFilter,
   criticalityFilter,
   clusterFilter,
   groupFilter,
   onSearchChange,
+  onSourceFilterChange,
   onProficiencyFilterChange,
   onCriticalityFilterChange,
   onClusterFilterChange,
@@ -48,7 +52,17 @@ export const VariantSkillsFilters = ({
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Select value={sourceFilter} onValueChange={onSourceFilterChange}>
+          <SelectTrigger className="font-body">
+            <SelectValue placeholder="Filter by Source" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sources</SelectItem>
+            <SelectItem value="From Job Role">From Job Role</SelectItem>
+            <SelectItem value="Variant specific">Variant specific</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={proficiencyFilter} onValueChange={onProficiencyFilterChange}>
           <SelectTrigger className="font-body">
             <SelectValue placeholder="Filter by Proficiency" />

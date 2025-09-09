@@ -61,7 +61,11 @@ export const JobVariantInfoCard = ({ jobVariant }: JobVariantInfoCardProps) => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Organization Metadata */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
+          <div>
+            <h4 className="font-heading text-sm font-medium text-primary mb-1">Mapped to Job Role</h4>
+            <p className="font-body text-sm text-muted-foreground">{jobVariant.mappedToJobRole}</p>
+          </div>
           <div>
             <h4 className="font-heading text-sm font-medium text-primary mb-1">Business</h4>
             <p className="font-body text-sm text-muted-foreground">{jobVariant.business}</p>

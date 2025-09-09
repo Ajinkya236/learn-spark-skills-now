@@ -1,99 +1,155 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { toast } from "sonner";
-import { JobPositionDetailsHeader } from "@/components/job-position/JobPositionDetailsHeader";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { JobPositionInfoCard } from "@/components/job-position/JobPositionInfoCard";
 import { PositionSkillsManagementCard } from "@/components/job-position/PositionSkillsManagementCard";
-import { EditPositionSkillDialog } from "@/components/job-position/EditPositionSkillDialog";
-import { DeletePositionSkillDialog } from "@/components/job-position/DeletePositionSkillDialog";
+
+interface JobPosition {
+  id: string;
+  jobPosition: string;
+  mappedToJobVariant: string;
+  mappedToJobRole: string;
+  business: string;
+  group: string;
+  department: string;
+  description: string;
+  rolesAndResponsibilities: string[];
+  mappedSkills: number;
+  lastUpdated: string;
+}
 
 interface JobPositionSkill {
   id: string;
   no: number;
   skillName: string;
   proficiencyLevel: string;
-  type: 'Job Role specific' | 'Position specific';
+  type: 'From Job Role' | 'From Job Variant' | 'Position specific';
   criticalityLevel: 'High' | 'Medium' | 'Low';
   cluster: string;
   group: string;
 }
 
+const mockJobPosition: JobPosition = {
+  id: '1',
+  jobPosition: 'Senior Frontend Developer - Team Lead',
+  mappedToJobVariant: 'Senior Frontend Developer - React Specialist',
+  mappedToJobRole: 'Senior Frontend Developer',
+  business: 'Technology',
+  group: 'Product Engineering',
+  department: 'Frontend Development',
+  description: 'Lead a team of frontend developers while maintaining hands-on involvement in React development. Responsible for technical decision making, mentoring team members, and ensuring code quality across all frontend projects.',
+  rolesAndResponsibilities: [
+    'Lead a team of 4-6 frontend developers',
+    'Design and implement complex React applications with TypeScript',
+    'Conduct code reviews and establish coding standards',
+    'Mentor junior developers and provide technical guidance',
+    'Collaborate with product managers and designers on feature planning',
+    'Optimize application performance and ensure scalability',
+    'Drive technical decisions and architecture choices',
+    'Manage project timelines and deliverables'
+  ],
+  mappedSkills: 18,
+  lastUpdated: '2024-01-15T10:30:00Z'
+};
+
+const mockPositionSkills: JobPositionSkill[] = [
+  {
+    id: '1',
+    no: 1,
+    skillName: 'React',
+    type: 'From Job Role',
+    proficiencyLevel: 'Expert',
+    criticalityLevel: 'High',
+    cluster: 'Programming',
+    group: 'Frontend Frameworks'
+  },
+  {
+    id: '2',
+    no: 2,
+    skillName: 'TypeScript',
+    type: 'From Job Variant',
+    proficiencyLevel: 'Advanced',
+    criticalityLevel: 'High',
+    cluster: 'Programming',
+    group: 'Languages'
+  },
+  {
+    id: '3',
+    no: 3,
+    skillName: 'Team Leadership',
+    type: 'Position specific',
+    proficiencyLevel: 'Advanced',
+    criticalityLevel: 'High',
+    cluster: 'Soft Skills',
+    group: 'Leadership'
+  },
+  {
+    id: '4',
+    no: 4,
+    skillName: 'Project Management',
+    type: 'Position specific',
+    proficiencyLevel: 'Intermediate',
+    criticalityLevel: 'Medium',
+    cluster: 'Soft Skills',
+    group: 'Management'
+  },
+  {
+    id: '5',
+    no: 5,
+    skillName: 'Next.js',
+    type: 'From Job Variant',
+    proficiencyLevel: 'Advanced',
+    criticalityLevel: 'High',
+    cluster: 'Programming',
+    group: 'Frontend Frameworks'
+  },
+  {
+    id: '6',
+    no: 6,
+    skillName: 'Code Review',
+    type: 'Position specific',
+    proficiencyLevel: 'Advanced',
+    criticalityLevel: 'Medium',
+    cluster: 'Soft Skills',
+    group: 'Technical Leadership'
+  }
+];
+
 const JobPositionDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
+  // Skill management state
+  const [skills, setSkills] = useState(mockPositionSkills);
   const [searchTerm, setSearchTerm] = useState('');
-  const [proficiencyFilter, setProficiencyFilter] = useState('');
-  const [criticalityFilter, setCriticalityFilter] = useState('');
-  const [clusterFilter, setClusterFilter] = useState('');
-  const [groupFilter, setGroupFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
+  const [proficiencyFilter, setProficiencyFilter] = useState('all');
+  const [criticalityFilter, setCriticalityFilter] = useState('all');
+  const [clusterFilter, setClusterFilter] = useState('all');
+  const [groupFilter, setGroupFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [editingSkill, setEditingSkill] = useState<JobPositionSkill | null>(null);
-  const [deletingSkill, setDeletingSkill] = useState<JobPositionSkill | null>(null);
+  
+  const itemsPerPage = 10;
+  
+  // Filter skills
+  const filteredSkills = skills.filter((skill) => {
+    const matchesSearch = skill.skillName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesProficiency = proficiencyFilter === 'all' || skill.proficiencyLevel === proficiencyFilter;
+    const matchesCriticality = criticalityFilter === 'all' || skill.criticalityLevel === criticalityFilter;
+    const matchesCluster = clusterFilter === 'all' || skill.cluster === clusterFilter;
+    const matchesGroup = groupFilter === 'all' || skill.group === groupFilter;
+    const matchesType = typeFilter === 'all' || skill.type === typeFilter;
 
-  // Mock data for the job position
-  const jobPosition = {
-    id: id || '1',
-    title: 'Senior Software Engineer',
-    jobRole: 'Software Engineer',
-    reportingTo: 'John Doe - Engineering Manager',
-    description: 'Lead development of complex software solutions and mentor junior developers',
-    rolesAndResponsibilities: 'Design and develop scalable applications, code reviews, technical leadership'
-  };
-
-  const [skills, setSkills] = useState<JobPositionSkill[]>([
-    {
-      id: '1',
-      no: 1,
-      skillName: 'React',
-      proficiencyLevel: 'Advanced',
-      type: 'Job Role specific',
-      criticalityLevel: 'High',
-      cluster: 'Programming',
-      group: 'Frontend Development'
-    },
-    {
-      id: '2',
-      no: 2,
-      skillName: 'Node.js',
-      proficiencyLevel: 'Intermediate',
-      type: 'Job Role specific',
-      criticalityLevel: 'Medium',
-      cluster: 'Programming',
-      group: 'Backend Development'
-    },
-    {
-      id: '3',
-      no: 3,
-      skillName: 'Team Leadership',
-      proficiencyLevel: 'Advanced',
-      type: 'Position specific',
-      criticalityLevel: 'High',
-      cluster: 'Soft Skills',
-      group: 'Leadership'
-    }
-  ]);
-
-  const filteredSkills = skills.filter(skill => {
-    return (
-      skill.skillName.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (!proficiencyFilter || proficiencyFilter === 'all' || skill.proficiencyLevel === proficiencyFilter) &&
-      (!criticalityFilter || criticalityFilter === 'all' || skill.criticalityLevel === criticalityFilter) &&
-      (!clusterFilter || clusterFilter === 'all' || skill.cluster === clusterFilter) &&
-      (!groupFilter || groupFilter === 'all' || skill.group === groupFilter) &&
-      (!typeFilter || typeFilter === 'all' || skill.type === typeFilter)
-    );
+    return matchesSearch && matchesProficiency && matchesCriticality && matchesCluster && matchesGroup && matchesType;
   });
 
-  const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredSkills.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedSkills = filteredSkills.slice(startIndex, startIndex + itemsPerPage);
+  const displayedSkills = filteredSkills.slice(startIndex, startIndex + itemsPerPage);
 
   const handleBack = () => {
     navigate('/skills/job-position-relationship');
@@ -104,27 +160,18 @@ const JobPositionDetails = () => {
   };
 
   const handleEditSkill = (skill: JobPositionSkill) => {
-    setEditingSkill(skill);
+    // Only allow editing if type is not "Position specific"
+    if (skill.type !== 'Position specific') {
+      console.log('Edit skill:', skill);
+      // TODO: Implement edit skill dialog
+    }
   };
 
   const handleDeleteSkill = (skill: JobPositionSkill) => {
-    setDeletingSkill(skill);
-  };
-
-  const handleSaveSkillEdit = (skillId: string, updates: { proficiencyLevel: string; criticalityLevel: 'High' | 'Medium' | 'Low' }) => {
-    setSkills(prev => prev.map(skill => 
-      skill.id === skillId 
-        ? { ...skill, ...updates }
-        : skill
-    ));
-    toast.success("Skill requirements updated successfully");
-  };
-
-  const handleConfirmDelete = () => {
-    if (deletingSkill) {
-      setSkills(prev => prev.filter(skill => skill.id !== deletingSkill.id));
-      toast.success(`${deletingSkill.skillName} removed from job position`);
-      setDeletingSkill(null);
+    // Only allow deleting if type is not "Position specific"
+    if (skill.type !== 'Position specific') {
+      console.log('Delete skill:', skill);
+      // TODO: Implement delete skill confirmation
     }
   };
 
@@ -134,18 +181,33 @@ const JobPositionDetails = () => {
         <AppSidebar />
         <SidebarInset>
           <div className="flex-1 space-y-6 p-4 md:p-6">
-            <JobPositionDetailsHeader
-              jobPosition={jobPosition}
-              onBack={handleBack}
-            />
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBack}
+                  className="font-body"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <div>
+                  <h1 className="text-3xl font-heading text-primary">Job Position Details</h1>
+                  <p className="text-muted-foreground font-body">
+                    Manage skills and requirements for this job position
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            <JobPositionInfoCard
-              jobPosition={jobPosition}
-              currentSkillsCount={skills.length}
-            />
+            {/* Job Position Info */}
+            <JobPositionInfoCard jobPosition={mockJobPosition} />
 
+            {/* Skills Management */}
             <PositionSkillsManagementCard
-              skills={paginatedSkills}
+              skills={displayedSkills}
               searchTerm={searchTerm}
               proficiencyFilter={proficiencyFilter}
               criticalityFilter={criticalityFilter}
@@ -164,20 +226,6 @@ const JobPositionDetails = () => {
               onAddSkills={handleAddSkills}
               onEditSkill={handleEditSkill}
               onDeleteSkill={handleDeleteSkill}
-            />
-
-            <EditPositionSkillDialog
-              skill={editingSkill}
-              open={!!editingSkill}
-              onOpenChange={(open) => !open && setEditingSkill(null)}
-              onSave={handleSaveSkillEdit}
-            />
-
-            <DeletePositionSkillDialog
-              skillName={deletingSkill?.skillName || null}
-              open={!!deletingSkill}
-              onOpenChange={(open) => !open && setDeletingSkill(null)}
-              onConfirm={handleConfirmDelete}
             />
           </div>
         </SidebarInset>
