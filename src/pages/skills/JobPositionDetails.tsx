@@ -126,6 +126,7 @@ const JobPositionDetails = () => {
   // Skill management state
   const [skills, setSkills] = useState(mockPositionSkills);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [proficiencyFilter, setProficiencyFilter] = useState('all');
   const [criticalityFilter, setCriticalityFilter] = useState('all');
   const [clusterFilter, setClusterFilter] = useState('all');
@@ -138,13 +139,14 @@ const JobPositionDetails = () => {
   // Filter skills
   const filteredSkills = skills.filter((skill) => {
     const matchesSearch = skill.skillName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSource = sourceFilter === 'all' || skill.type === sourceFilter;
     const matchesProficiency = proficiencyFilter === 'all' || skill.proficiencyLevel === proficiencyFilter;
     const matchesCriticality = criticalityFilter === 'all' || skill.criticalityLevel === criticalityFilter;
     const matchesCluster = clusterFilter === 'all' || skill.cluster === clusterFilter;
     const matchesGroup = groupFilter === 'all' || skill.group === groupFilter;
     const matchesType = typeFilter === 'all' || skill.type === typeFilter;
 
-    return matchesSearch && matchesProficiency && matchesCriticality && matchesCluster && matchesGroup && matchesType;
+    return matchesSearch && matchesSource && matchesProficiency && matchesCriticality && matchesCluster && matchesGroup && matchesType;
   });
 
   const totalPages = Math.ceil(filteredSkills.length / itemsPerPage);
@@ -209,6 +211,7 @@ const JobPositionDetails = () => {
             <PositionSkillsManagementCard
               skills={displayedSkills}
               searchTerm={searchTerm}
+              sourceFilter={sourceFilter}
               proficiencyFilter={proficiencyFilter}
               criticalityFilter={criticalityFilter}
               clusterFilter={clusterFilter}
@@ -217,6 +220,7 @@ const JobPositionDetails = () => {
               currentPage={currentPage}
               totalPages={totalPages}
               onSearchChange={setSearchTerm}
+              onSourceFilterChange={setSourceFilter}
               onProficiencyFilterChange={setProficiencyFilter}
               onCriticalityFilterChange={setCriticalityFilter}
               onClusterFilterChange={setClusterFilter}

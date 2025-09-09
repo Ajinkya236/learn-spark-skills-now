@@ -11,7 +11,7 @@ interface JobPositionSkill {
   no: number;
   skillName: string;
   proficiencyLevel: string;
-  type: 'Job Role specific' | 'Position specific';
+  type: 'From Job Role' | 'From Job Variant' | 'Position specific';
   criticalityLevel: 'High' | 'Medium' | 'Low';
   cluster: string;
   group: string;
@@ -20,6 +20,7 @@ interface JobPositionSkill {
 interface PositionSkillsManagementCardProps {
   skills: JobPositionSkill[];
   searchTerm: string;
+  sourceFilter: string;
   proficiencyFilter: string;
   criticalityFilter: string;
   clusterFilter: string;
@@ -28,6 +29,7 @@ interface PositionSkillsManagementCardProps {
   currentPage: number;
   totalPages: number;
   onSearchChange: (value: string) => void;
+  onSourceFilterChange: (value: string) => void;
   onProficiencyFilterChange: (value: string) => void;
   onCriticalityFilterChange: (value: string) => void;
   onClusterFilterChange: (value: string) => void;
@@ -42,6 +44,7 @@ interface PositionSkillsManagementCardProps {
 export const PositionSkillsManagementCard = ({
   skills,
   searchTerm,
+  sourceFilter,
   proficiencyFilter,
   criticalityFilter,
   clusterFilter,
@@ -50,6 +53,7 @@ export const PositionSkillsManagementCard = ({
   currentPage,
   totalPages,
   onSearchChange,
+  onSourceFilterChange,
   onProficiencyFilterChange,
   onCriticalityFilterChange,
   onClusterFilterChange,
@@ -77,12 +81,14 @@ export const PositionSkillsManagementCard = ({
       <CardContent className="space-y-4">
         <PositionSkillsFilters
           searchTerm={searchTerm}
+          sourceFilter={sourceFilter}
           proficiencyFilter={proficiencyFilter}
           criticalityFilter={criticalityFilter}
           clusterFilter={clusterFilter}
           groupFilter={groupFilter}
           typeFilter={typeFilter}
           onSearchChange={onSearchChange}
+          onSourceFilterChange={onSourceFilterChange}
           onProficiencyFilterChange={onProficiencyFilterChange}
           onCriticalityFilterChange={onCriticalityFilterChange}
           onClusterFilterChange={onClusterFilterChange}
