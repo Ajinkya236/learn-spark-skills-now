@@ -57,44 +57,10 @@ const menuItems = [
       { title: "Proficiency Levels", url: "/skills/proficiency", icon: Target },
       { title: "Job Role - Skill Relationship", url: "/skills/job-role-relationship", icon: Link },
       { title: "Job Variant - Skill Relationship", url: "/skills/job-variant-relationship", icon: Briefcase },
-      { title: "Job Position - Skill Relationship", url: "/skills/job-position-relationship", icon: User },
+      { title: "Job Position - Skills Mapping", url: "/skills/job-position-relationship", icon: User },
       { title: "Skill - Skill Relationship", url: "/skills/skill-relationship", icon: Network },
       { title: "Learning Content - Skill Relationship", url: "/skills/learning-content-relationship", icon: BookOpen },
       { title: "Employee Skill Relationship", url: "/skills/employee-relationship", icon: UserCheck },
-    ],
-  },
-  {
-    title: "Organization",
-    icon: Building2,
-    items: [
-      { title: "Structure & Roles", url: "/organization/structure", icon: Building2 },
-      { title: "Employee Profiles", url: "/organization/profiles", icon: Users },
-    ],
-  },
-  {
-    title: "Workforce Intelligence",
-    icon: BarChart3,
-    items: [
-      { title: "Forecasting & Deployment", url: "/workforce/forecasting", icon: TrendingUp },
-      { title: "Gap Analysis", url: "/workforce/gaps", icon: BarChart3 },
-      { title: "Progress Tracking", url: "/workforce/progress", icon: Award },
-    ],
-  },
-  {
-    title: "Talent Mobility",
-    icon: Route,
-    items: [
-      { title: "Career Journeys", url: "/talent/journeys", icon: MapPin },
-      { title: "Job Matching", url: "/talent/matching", icon: UserCheck },
-      { title: "Internal Marketplace", url: "/talent/marketplace", icon: Briefcase },
-    ],
-  },
-  {
-    title: "Smart Recommendations",
-    icon: Lightbulb,
-    items: [
-      { title: "Learning Paths", url: "/recommendations/learning", icon: BookOpen },
-      { title: "Mentors & Projects", url: "/recommendations/mentors", icon: UserPlus },
     ],
   },
 ];

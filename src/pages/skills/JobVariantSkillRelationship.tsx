@@ -169,11 +169,19 @@ const JobVariantSkillRelationship = () => {
         <SidebarInset>
           <div className="flex-1 space-y-6 p-4 md:p-6">
             {/* Header */}
-            <div className="flex flex-col space-y-2">
-              <h1 className="text-3xl font-heading text-primary">Job Variant - Skill Management</h1>
-              <p className="text-muted-foreground font-body">
-                Manage skill relationships for job variants and their specific requirements
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+              <div>
+                <h1 className="text-3xl font-heading text-primary">Job Variant - Skill Management</h1>
+                <p className="text-muted-foreground font-body">
+                  Manage skill relationships for job variants and their specific requirements
+                </p>
+              </div>
+              <Button 
+                onClick={() => navigate('/skills/job-variant-relationship/create')}
+                className="font-body"
+              >
+                Create Job Variant
+              </Button>
             </div>
 
             {/* Filters Card */}

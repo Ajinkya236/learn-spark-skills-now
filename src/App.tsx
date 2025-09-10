@@ -22,6 +22,7 @@ import AddSkillsToJobRole from '@/pages/skills/AddSkillsToJobRole';
 import JobVariantSkillRelationship from '@/pages/skills/JobVariantSkillRelationship';
 import JobVariantDetails from '@/pages/skills/JobVariantDetails';
 import AddSkillsToJobVariant from '@/pages/skills/AddSkillsToJobVariant';
+import CreateJobVariant from '@/pages/skills/CreateJobVariant';
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ function App() {
             <Route path="/skills/job-role-relationship/:id" element={<JobRoleDetails />} />
             <Route path="/skills/job-role-relationship/:id/add-skills" element={<AddSkillsToJobRole />} />
             <Route path="/skills/job-variant-relationship" element={<JobVariantSkillRelationship />} />
+            <Route path="/skills/job-variant-relationship/create" element={<CreateJobVariant />} />
             <Route path="/skills/job-variant-relationship/:id" element={<JobVariantDetails />} />
             <Route path="/skills/job-variant-relationship/:id/add-skills" element={<AddSkillsToJobVariant />} />
             <Route path="/skills/job-position-relationship" element={<JobPositionSkillRelationship />} />
