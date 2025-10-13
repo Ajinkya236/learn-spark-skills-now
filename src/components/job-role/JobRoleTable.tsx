@@ -48,10 +48,6 @@ export const JobRoleTable = ({
             <TableHeader>
               <TableRow>
                 <TableHead className="font-black font-inter">Job Role</TableHead>
-                <TableHead className="font-black font-inter">Business</TableHead>
-                <TableHead className="font-black font-inter">Group</TableHead>
-                <TableHead className="font-black font-inter">Department</TableHead>
-                <TableHead className="font-black font-inter">Max Skills</TableHead>
                 <TableHead className="font-black font-inter">Mapped Skills</TableHead>
                 <TableHead className="font-black font-inter">Actions</TableHead>
               </TableRow>
@@ -65,10 +61,6 @@ export const JobRoleTable = ({
                       <div className="text-sm text-muted-foreground font-arial">{role.description}</div>
                     </div>
                   </TableCell>
-                  <TableCell className="font-arial">{role.business}</TableCell>
-                  <TableCell className="font-arial">{role.group}</TableCell>
-                  <TableCell className="font-arial">{role.department}</TableCell>
-                  <TableCell className="font-arial">{role.maxSkills}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1 max-w-xs">
                       {role.skills.slice(0, 3).map((skill, index) => (

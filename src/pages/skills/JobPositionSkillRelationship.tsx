@@ -108,9 +108,6 @@ const JobPositionSkillRelationship = () => {
   
   // State for filters and search
   const [searchTerm, setSearchTerm] = useState('');
-  const [businessFilter, setBusinessFilter] = useState('all');
-  const [groupFilter, setGroupFilter] = useState('all');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
   const [sortBy, setSortBy] = useState('lastUpdated');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -123,11 +120,7 @@ const JobPositionSkillRelationship = () => {
       const matchesSearch = 
         position.jobPosition.toLowerCase().includes(searchTerm.toLowerCase()) ||
         position.mappedToJobRole.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesBusiness = businessFilter === 'all' || position.business === businessFilter;
-      const matchesGroup = groupFilter === 'all' || position.group === groupFilter;
-      const matchesDepartment = departmentFilter === 'all' || position.department === departmentFilter;
-
-      return matchesSearch && matchesBusiness && matchesGroup && matchesDepartment;
+      return matchesSearch;
     });
 
     // Sort data
@@ -151,7 +144,7 @@ const JobPositionSkillRelationship = () => {
     });
 
     return filtered;
-  }, [searchTerm, businessFilter, groupFilter, departmentFilter, sortBy, sortOrder]);
+  }, [searchTerm, sortBy, sortOrder]);
 
   const totalPages = Math.ceil(filteredAndSortedPositions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -216,48 +209,8 @@ const JobPositionSkillRelationship = () => {
                   />
                 </div>
 
-                {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Select value={businessFilter} onValueChange={setBusinessFilter}>
-                    <SelectTrigger className="font-body">
-                      <SelectValue placeholder="Filter by Business" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Businesses</SelectItem>
-                      <SelectItem value="Technology">Technology</SelectItem>
-                      <SelectItem value="Product">Product</SelectItem>
-                      <SelectItem value="Design">Design</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={groupFilter} onValueChange={setGroupFilter}>
-                    <SelectTrigger className="font-body">
-                      <SelectValue placeholder="Filter by Group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Groups</SelectItem>
-                      <SelectItem value="Product Engineering">Product Engineering</SelectItem>
-                      <SelectItem value="Platform Engineering">Platform Engineering</SelectItem>
-                      <SelectItem value="Infrastructure">Infrastructure</SelectItem>
-                      <SelectItem value="Product Management">Product Management</SelectItem>
-                      <SelectItem value="Product Design">Product Design</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                    <SelectTrigger className="font-body">
-                      <SelectValue placeholder="Filter by Department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
-                      <SelectItem value="Frontend Development">Frontend Development</SelectItem>
-                      <SelectItem value="Backend Development">Backend Development</SelectItem>
-                      <SelectItem value="Cloud Operations">Cloud Operations</SelectItem>
-                      <SelectItem value="Mobile Products">Mobile Products</SelectItem>
-                      <SelectItem value="User Experience">User Experience</SelectItem>
-                    </SelectContent>
-                  </Select>
-
+                {/* Sort */}
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
                     const [field, order] = value.split('-');
                     setSortBy(field);
@@ -306,9 +259,6 @@ const JobPositionSkillRelationship = () => {
                         </TableHead>
                         <TableHead className="font-heading">Mapped to Job Variant</TableHead>
                         <TableHead className="font-heading">Mapped to Job Role</TableHead>
-                        <TableHead className="font-heading">Business</TableHead>
-                        <TableHead className="font-heading">Group</TableHead>
-                        <TableHead className="font-heading">Department</TableHead>
                         <TableHead className="font-heading">Mapped Skills</TableHead>
                         <TableHead className="font-heading">
                           <Button 
@@ -334,21 +284,6 @@ const JobPositionSkillRelationship = () => {
                           </TableCell>
                           <TableCell className="font-body">
                             {position.mappedToJobRole}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="font-body">
-                              {position.business}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="font-body">
-                              {position.group}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="font-body">
-                              {position.department}
-                            </Badge>
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="secondary" className="font-body">

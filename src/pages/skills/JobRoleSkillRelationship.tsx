@@ -28,12 +28,7 @@ interface GlobalSettings {
 const JobRoleSkillRelationship = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [businessFilter, setBusinessFilter] = useState('');
-  const [groupFilter, setGroupFilter] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [globalSettings, setGlobalSettings] = useState<GlobalSettings>({ globalMaxSkills: 50 });
 
   // Mock data
   const [jobRoles] = useState<JobRole[]>([
@@ -59,17 +54,8 @@ const JobRoleSkillRelationship = () => {
     }
   ]);
 
-  const businesses = ['Technology', 'Product', 'Marketing', 'Sales'];
-  const groups = ['Engineering', 'Management', 'Design', 'Operations'];
-  const departments = ['Development', 'Strategy', 'Creative', 'Support'];
-
   const filteredJobRoles = jobRoles.filter(role => {
-    return (
-      role.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (!businessFilter || businessFilter === 'all' || role.business === businessFilter) &&
-      (!groupFilter || groupFilter === 'all' || role.group === groupFilter) &&
-      (!departmentFilter || departmentFilter === 'all' || role.department === departmentFilter)
-    );
+    return role.title.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const itemsPerPage = 10;
@@ -81,20 +67,6 @@ const JobRoleSkillRelationship = () => {
     navigate(`/skills/job-role-relationship/${jobRole.id}`);
   };
 
-  const handleSaveGlobalSettings = () => {
-    // Validate that global max is not less than highest local max
-    const highestLocalMax = Math.max(...jobRoles.map(role => role.maxSkills));
-    
-    if (globalSettings.globalMaxSkills < highestLocalMax) {
-      toast.error(`Global maximum skills cannot be less than the highest local maximum (${highestLocalMax}) for existing roles`);
-      return;
-    }
-
-    toast.success("Global settings updated successfully");
-    setIsSettingsOpen(false);
-  };
-
-  const highestLocalMax = Math.max(...jobRoles.map(role => role.maxSkills));
 
   return (
     <SidebarProvider>
@@ -113,16 +85,7 @@ const JobRoleSkillRelationship = () => {
 
             <JobRoleFilters
               searchTerm={searchTerm}
-              businessFilter={businessFilter}
-              groupFilter={groupFilter}
-              departmentFilter={departmentFilter}
-              businesses={businesses}
-              groups={groups}
-              departments={departments}
               onSearchChange={setSearchTerm}
-              onBusinessFilterChange={setBusinessFilter}
-              onGroupFilterChange={setGroupFilter}
-              onDepartmentFilterChange={setDepartmentFilter}
             />
 
             <JobRoleTable

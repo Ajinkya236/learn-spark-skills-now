@@ -99,9 +99,6 @@ const mockJobVariants: JobVariant[] = [
 const JobVariantSkillRelationship = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [businessFilter, setBusinessFilter] = useState('all');
-  const [groupFilter, setGroupFilter] = useState('all');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
   const [sortBy, setSortBy] = useState('lastUpdated');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -111,11 +108,7 @@ const JobVariantSkillRelationship = () => {
   const filteredVariants = mockJobVariants.filter((variant) => {
     const matchesSearch = variant.jobVariant.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          variant.mappedToJobRole.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesBusiness = businessFilter === 'all' || variant.business === businessFilter;
-    const matchesGroup = groupFilter === 'all' || variant.group === groupFilter;
-    const matchesDepartment = departmentFilter === 'all' || variant.department === departmentFilter;
-
-    return matchesSearch && matchesBusiness && matchesGroup && matchesDepartment;
+    return matchesSearch;
   }).sort((a, b) => {
     let aValue: any = a[sortBy as keyof JobVariant];
     let bValue: any = b[sortBy as keyof JobVariant];
@@ -204,47 +197,8 @@ const JobVariantSkillRelationship = () => {
                   />
                 </div>
 
-                {/* Filter Row */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Select value={businessFilter} onValueChange={setBusinessFilter}>
-                    <SelectTrigger className="font-body">
-                      <SelectValue placeholder="Filter by Business" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Businesses</SelectItem>
-                      <SelectItem value="Technology">Technology</SelectItem>
-                      <SelectItem value="Healthcare">Healthcare</SelectItem>
-                      <SelectItem value="Product">Product</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={groupFilter} onValueChange={setGroupFilter}>
-                    <SelectTrigger className="font-body">
-                      <SelectValue placeholder="Filter by Group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Groups</SelectItem>
-                      <SelectItem value="Product Engineering">Product Engineering</SelectItem>
-                      <SelectItem value="Infrastructure">Infrastructure</SelectItem>
-                      <SelectItem value="Analytics">Analytics</SelectItem>
-                      <SelectItem value="Product Management">Product Management</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                    <SelectTrigger className="font-body">
-                      <SelectValue placeholder="Filter by Department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
-                      <SelectItem value="Frontend Development">Frontend Development</SelectItem>
-                      <SelectItem value="Backend Development">Backend Development</SelectItem>
-                      <SelectItem value="Cloud Operations">Cloud Operations</SelectItem>
-                      <SelectItem value="Data Science">Data Science</SelectItem>
-                      <SelectItem value="Mobile Products">Mobile Products</SelectItem>
-                    </SelectContent>
-                  </Select>
-
+                {/* Sort */}
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
                     const [field, order] = value.split('-');
                     setSortBy(field);
@@ -298,9 +252,6 @@ const JobVariantSkillRelationship = () => {
                           </Button>
                         </TableHead>
                         <TableHead className="font-body">Mapped to Job Role</TableHead>
-                        <TableHead className="font-body">Business</TableHead>
-                        <TableHead className="font-body">Group</TableHead>
-                        <TableHead className="font-body">Department</TableHead>
                         <TableHead className="font-body text-center">Mapped Skills</TableHead>
                         <TableHead className="font-body">
                           <Button
@@ -324,13 +275,6 @@ const JobVariantSkillRelationship = () => {
                             </div>
                           </TableCell>
                           <TableCell className="font-body">{variant.mappedToJobRole}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="font-body">
-                              {variant.business}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-body">{variant.group}</TableCell>
-                          <TableCell className="font-body">{variant.department}</TableCell>
                           <TableCell className="text-center">
                             <Badge variant="secondary" className="font-body">
                               {variant.mappedSkills}
