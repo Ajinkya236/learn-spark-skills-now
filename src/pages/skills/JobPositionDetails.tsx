@@ -162,19 +162,16 @@ const JobPositionDetails = () => {
   };
 
   const handleEditSkill = (skill: JobPositionSkill) => {
-    // Only allow editing if type is not "Position specific"
-    if (skill.type !== 'Position specific') {
+    // Only allow editing if type is "Position specific"
+    if (skill.type === 'Position specific') {
       console.log('Edit skill:', skill);
       // TODO: Implement edit skill dialog
     }
   };
 
   const handleDeleteSkill = (skill: JobPositionSkill) => {
-    // Only allow deleting if type is not "Position specific"
-    if (skill.type !== 'Position specific') {
-      console.log('Delete skill:', skill);
-      // TODO: Implement delete skill confirmation
-    }
+    // This function is not used anymore - delete functionality removed
+    console.log('Delete skill functionality removed:', skill);
   };
 
   return (

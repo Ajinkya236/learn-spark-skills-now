@@ -75,16 +75,19 @@ export const PositionSkillsTable = ({
                  </TableCell>
                  <TableCell>{skill.cluster}</TableCell>
                  <TableCell>{skill.group}</TableCell>
-                 <TableCell>
-                   <div className="flex gap-2">
-                     <Button size="sm" variant="ghost" onClick={() => onEditSkill(skill)}>
-                       <Edit className="h-4 w-4" />
-                     </Button>
-                     <Button size="sm" variant="ghost" onClick={() => onDeleteSkill(skill)}>
-                       <Trash2 className="h-4 w-4" />
-                     </Button>
-                   </div>
-                 </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => onEditSkill(skill)}
+                        disabled={skill.type === 'From Job Role' || skill.type === 'From Job Variant'}
+                        title={skill.type !== 'Position specific' ? 'Skills from Job Role or Job Variant cannot be edited' : 'Edit skill'}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                </TableRow>
              ))}
           </TableBody>

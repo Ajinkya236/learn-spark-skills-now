@@ -69,7 +69,7 @@ export const JobPositionInfoCard = ({ jobPosition }: JobPositionInfoCardProps) =
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Organization Metadata */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 bg-muted/30 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
           <div>
             <h4 className="font-heading text-sm font-medium text-primary mb-1">Mapped to Job Role</h4>
             <p className="font-body text-sm text-muted-foreground">{jobPosition.mappedToJobRole}</p>
@@ -77,18 +77,6 @@ export const JobPositionInfoCard = ({ jobPosition }: JobPositionInfoCardProps) =
           <div>
             <h4 className="font-heading text-sm font-medium text-primary mb-1">Mapped to Job Variant</h4>
             <p className="font-body text-sm text-muted-foreground">{jobPosition.mappedToJobVariant}</p>
-          </div>
-          <div>
-            <h4 className="font-heading text-sm font-medium text-primary mb-1">Business</h4>
-            <p className="font-body text-sm text-muted-foreground">{jobPosition.business}</p>
-          </div>
-          <div>
-            <h4 className="font-heading text-sm font-medium text-primary mb-1">Group</h4>
-            <p className="font-body text-sm text-muted-foreground">{jobPosition.group}</p>
-          </div>
-          <div>
-            <h4 className="font-heading text-sm font-medium text-primary mb-1">Department</h4>
-            <p className="font-body text-sm text-muted-foreground">{jobPosition.department}</p>
           </div>
         </div>
 

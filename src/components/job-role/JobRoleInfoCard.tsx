@@ -32,25 +32,6 @@ export const JobRoleInfoCard = ({ jobRole, currentSkillsCount }: JobRoleInfoCard
         <CardDescription>Overview of the job role details and current skill requirements</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Business</p>
-            <p className="mt-1">{jobRole.business}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Group</p>
-            <p className="mt-1">{jobRole.group}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Department</p>
-            <p className="mt-1">{jobRole.department}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Reporting To</p>
-            <p className="mt-1">{additionalInfo.reportingTo}</p>
-          </div>
-        </div>
-        
         <div>
           <p className="text-sm font-medium text-muted-foreground">Description</p>
           <p className="mt-1 text-sm">{additionalInfo.description}</p>
@@ -63,8 +44,8 @@ export const JobRoleInfoCard = ({ jobRole, currentSkillsCount }: JobRoleInfoCard
         
         <div className="pt-4 border-t">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">Current Skills / Max Skills</p>
-            <Badge variant="secondary">{currentSkillsCount} / {jobRole.maxSkills}</Badge>
+            <p className="text-sm font-medium text-muted-foreground">Current Skills</p>
+            <Badge variant="secondary">{currentSkillsCount} Skills Mapped</Badge>
           </div>
         </div>
       </CardContent>

@@ -73,9 +73,6 @@ export const SkillsTable = ({
                     <Button size="sm" variant="ghost" onClick={() => onEditSkill(skill)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => onDeleteSkill(skill)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </TableCell>
               </TableRow>

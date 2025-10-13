@@ -33,6 +33,12 @@ interface SelectedSkill {
   group: string;
 }
 
+interface SelectedJobPosition {
+  id: string;
+  name: string;
+  currentJobRole: string;
+}
+
 interface SkillOption {
   id: string;
   name: string;
@@ -79,6 +85,14 @@ const mockSkills: SkillOption[] = [
   { id: '5', name: 'Docker', cluster: 'Containerization', group: 'DevOps' }
 ];
 
+// Mock job positions without job variant
+const mockJobPositionsWithoutVariant = [
+  { id: '1', name: 'Senior Frontend Developer Position A', currentJobRole: 'Senior Frontend Developer' },
+  { id: '2', name: 'Senior Frontend Developer Position B', currentJobRole: 'Senior Frontend Developer' },
+  { id: '3', name: 'Frontend Team Lead Position', currentJobRole: 'Senior Frontend Developer' },
+  { id: '4', name: 'Frontend Architect Position', currentJobRole: 'Senior Frontend Developer' }
+];
+
 const proficiencyLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
 const criticalityLevels = ['Low', 'Medium', 'High'];
 
@@ -101,6 +115,11 @@ const CreateJobVariant = () => {
   const [selectedSkills, setSelectedSkills] = useState<SelectedSkill[]>([]);
   const [showSkillSearch, setShowSkillSearch] = useState(false);
   const [skillSearchTerm, setSkillSearchTerm] = useState('');
+
+  // Job Positions state
+  const [selectedJobPositions, setSelectedJobPositions] = useState<SelectedJobPosition[]>([]);
+  const [showJobPositionSearch, setShowJobPositionSearch] = useState(false);
+  const [jobPositionSearchTerm, setJobPositionSearchTerm] = useState('');
 
   // Job Role Search
   const [jobRoleSearchTerm, setJobRoleSearchTerm] = useState('');
@@ -132,6 +151,13 @@ const CreateJobVariant = () => {
     !selectedSkills.some(selected => selected.id === skill.id)
   );
 
+  const filteredJobPositions = mockJobPositionsWithoutVariant.filter(position =>
+    position.name.toLowerCase().includes(jobPositionSearchTerm.toLowerCase()) &&
+    !selectedJobPositions.some(selected => selected.id === position.id) &&
+    selectedJobRole &&
+    position.currentJobRole === selectedJobRole.name
+  );
+
   const handleJobRoleSelect = (role: { id: string; name: string }) => {
     setSelectedJobRole(role);
     setShowJobRoleSearch(false);
@@ -156,6 +182,15 @@ const CreateJobVariant = () => {
     setSelectedSkills(selectedSkills.map(skill =>
       skill.id === skillId ? { ...skill, [field]: value } : skill
     ));
+  };
+
+  const handleJobPositionAdd = (position: SelectedJobPosition) => {
+    setSelectedJobPositions([...selectedJobPositions, position]);
+    setJobPositionSearchTerm('');
+  };
+
+  const handleJobPositionRemove = (positionId: string) => {
+    setSelectedJobPositions(selectedJobPositions.filter(position => position.id !== positionId));
   };
 
   const handleSubmit = () => {
@@ -525,6 +560,97 @@ const CreateJobVariant = () => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Job Positions Section */}
+            {selectedJobRole && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-heading">Job Positions (Optional)</CardTitle>
+                  <CardDescription className="font-body">
+                    Add job positions that currently don't have a job variant mapped
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="font-body">Search and Add Job Positions</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowJobPositionSearch(!showJobPositionSearch)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Positions
+                      </Button>
+                    </div>
+
+                    {showJobPositionSearch && (
+                      <div className="space-y-2 p-4 border rounded-md bg-muted/20">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            placeholder="Search job positions..."
+                            value={jobPositionSearchTerm}
+                            onChange={(e) => setJobPositionSearchTerm(e.target.value)}
+                            className="pl-10 font-body"
+                          />
+                        </div>
+                        
+                        <div className="max-h-48 overflow-y-auto space-y-1">
+                          {filteredJobPositions.length > 0 ? (
+                            filteredJobPositions.map((position) => (
+                              <div
+                                key={position.id}
+                                className="flex items-center justify-between p-3 hover:bg-muted rounded cursor-pointer"
+                                onClick={() => handleJobPositionAdd(position)}
+                              >
+                                <div>
+                                  <span className="font-body font-medium">{position.name}</span>
+                                  <div className="text-sm text-muted-foreground">
+                                    Job Role: {position.currentJobRole}
+                                  </div>
+                                </div>
+                                <Plus className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="p-3 text-center text-sm text-muted-foreground">
+                              No job positions available without a variant for this job role
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Selected Job Positions */}
+                  {selectedJobPositions.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="font-body">Selected Job Positions ({selectedJobPositions.length})</Label>
+                      <div className="space-y-2">
+                        {selectedJobPositions.map((position) => (
+                          <div key={position.id} className="flex items-center justify-between p-3 border rounded-md">
+                            <div>
+                              <span className="font-body font-medium">{position.name}</span>
+                              <div className="text-sm text-muted-foreground">
+                                Job Role: {position.currentJobRole}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleJobPositionRemove(position.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </CardContent>

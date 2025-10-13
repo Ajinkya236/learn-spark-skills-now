@@ -20,13 +20,15 @@ interface EditSkillDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (skillId: string, updates: { proficiencyLevel: string; criticalityLevel: 'High' | 'Medium' | 'Low' }) => void;
+  availableProficiencyLevels?: string[];
 }
 
 export const EditSkillDialog = ({
   skill,
   open,
   onOpenChange,
-  onSave
+  onSave,
+  availableProficiencyLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert']
 }: EditSkillDialogProps) => {
   const [proficiencyLevel, setProficiencyLevel] = useState('');
   const [criticalityLevel, setCriticalityLevel] = useState<'High' | 'Medium' | 'Low'>('Medium');
@@ -64,10 +66,9 @@ export const EditSkillDialog = ({
                 <SelectValue placeholder="Select proficiency level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Beginner">Beginner</SelectItem>
-                <SelectItem value="Intermediate">Intermediate</SelectItem>
-                <SelectItem value="Advanced">Advanced</SelectItem>
-                <SelectItem value="Expert">Expert</SelectItem>
+                {availableProficiencyLevels.map(level => (
+                  <SelectItem key={level} value={level}>{level}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

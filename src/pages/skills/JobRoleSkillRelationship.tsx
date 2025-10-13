@@ -102,11 +102,14 @@ const JobRoleSkillRelationship = () => {
         <AppSidebar />
         <SidebarInset>
           <div className="flex-1 space-y-6 p-4 md:p-6">
-            <JobRoleHeader
-              title="Job Role - Skill Relationship"
-              description="Manage skill requirements and proficiency levels for job roles"
-              onOpenSettings={() => setIsSettingsOpen(true)}
-            />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-3xl font-heading text-primary">Job Role - Skill Relationship</h1>
+                <p className="text-muted-foreground font-body">
+                  Manage skill requirements and proficiency levels for job roles
+                </p>
+              </div>
+            </div>
 
             <JobRoleFilters
               searchTerm={searchTerm}
@@ -131,14 +134,6 @@ const JobRoleSkillRelationship = () => {
               onPageChange={setCurrentPage}
             />
 
-            <GlobalSettingsDialog
-              isOpen={isSettingsOpen}
-              onClose={() => setIsSettingsOpen(false)}
-              settings={globalSettings}
-              onUpdateSettings={setGlobalSettings}
-              onSave={handleSaveGlobalSettings}
-              highestLocalMax={highestLocalMax}
-            />
           </div>
         </SidebarInset>
       </div>

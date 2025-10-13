@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/sidebar";
 import Logo from "./Logo";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { BulkCSVUploadDialog } from "@/components/skills/BulkCSVUploadDialog";
 
 const menuItems = [
   {
@@ -118,10 +119,18 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 )}
               </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+          
+          <SidebarGroup className="mt-auto border-t pt-4">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <BulkCSVUploadDialog />
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
   );
 }

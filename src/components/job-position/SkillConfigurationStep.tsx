@@ -23,6 +23,7 @@ interface SkillConfigurationStepProps {
   onRemoveSkill: (skillId: string) => void;
   onBackToSelection: () => void;
   onSubmit: () => void;
+  availableProficiencyLevels?: string[];
 }
 
 export const SkillConfigurationStep: React.FC<SkillConfigurationStepProps> = ({
@@ -30,7 +31,8 @@ export const SkillConfigurationStep: React.FC<SkillConfigurationStepProps> = ({
   onUpdateSkillConfig,
   onRemoveSkill,
   onBackToSelection,
-  onSubmit
+  onSubmit,
+  availableProficiencyLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert']
 }) => {
   return (
     <Card>
@@ -73,10 +75,9 @@ export const SkillConfigurationStep: React.FC<SkillConfigurationStepProps> = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Beginner">Beginner</SelectItem>
-                      <SelectItem value="Intermediate">Intermediate</SelectItem>
-                      <SelectItem value="Advanced">Advanced</SelectItem>
-                      <SelectItem value="Expert">Expert</SelectItem>
+                      {availableProficiencyLevels.map(level => (
+                        <SelectItem key={level} value={level}>{level}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
