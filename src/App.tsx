@@ -23,6 +23,7 @@ import JobVariantSkillRelationship from '@/pages/skills/JobVariantSkillRelations
 import JobVariantDetails from '@/pages/skills/JobVariantDetails';
 import AddSkillsToJobVariant from '@/pages/skills/AddSkillsToJobVariant';
 import CreateJobVariant from '@/pages/skills/CreateJobVariant';
+import BulkUpload from '@/pages/skills/BulkUpload';
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ function App() {
             <Route path="/skills/skill-relationship" element={<SkillSkillRelationship />} />
             <Route path="/skills/learning-content-relationship" element={<LearningContentSkillRelationship />} />
             <Route path="/skills/employee-relationship" element={<EmployeeSkillRelationship />} />
+            <Route path="/skills/bulk-upload" element={<BulkUpload />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

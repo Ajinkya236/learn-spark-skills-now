@@ -21,7 +21,8 @@ import {
   UserPlus,
   Trash2,
   Link,
-  User
+  User,
+  FileSpreadsheet
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -41,7 +42,6 @@ import {
 } from "@/components/ui/sidebar";
 import Logo from "./Logo";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { BulkCSVUploadDialog } from "@/components/skills/BulkCSVUploadDialog";
 
 const menuItems = [
   {
@@ -62,6 +62,7 @@ const menuItems = [
       { title: "Skill - Skill Relationship", url: "/skills/skill-relationship", icon: Network },
       { title: "Learning Content - Skill Relationship", url: "/skills/learning-content-relationship", icon: BookOpen },
       { title: "Employee Skill Relationship", url: "/skills/employee-relationship", icon: UserCheck },
+      { title: "Bulk Upload", url: "/skills/bulk-upload", icon: FileSpreadsheet },
     ],
   },
 ];
@@ -120,14 +121,6 @@ export function AppSidebar() {
                 )}
               </SidebarMenuItem>
               ))}
-            </SidebarMenu>
-          </SidebarGroup>
-          
-          <SidebarGroup className="mt-auto border-t pt-4">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <BulkCSVUploadDialog />
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
